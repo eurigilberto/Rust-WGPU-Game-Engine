@@ -9,8 +9,6 @@ edition = "2021"
 image = "0.23"
 winit = "0.26"
 glam = "0.20.5"
-env_logger = "0.9"
-log = "0.4"
 wgpu = "0.12"
 pollster = "0.2"
 bytemuck = { version = "1.4", features = [ "derive" ] }
