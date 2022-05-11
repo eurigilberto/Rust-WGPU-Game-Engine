@@ -1,0 +1,43 @@
+GUI render required data
+
+--- 0 is used to disable the feature, the data is sent to the pixel shader from the vertex shader
+--- The gui system is required to fill the correct data
+
+////////////////////////////////////////
+///// Quad UI renderer
+////////////////////////////////////////
+For blocks, fonts, icons, and atlased textures
+All the blocks are going to be rendered with all the faces facing the same direction
+////////////////////////////////////////
+
+// VERTEX BUFFER - INSTANCE
+* Rect position and size //This should be stored as a vertex buffer per instance as it is required by all indexes
+* Mask index
+* Texture Position Index
+* Use texture color
+* Border Radius index
+* Type ( rect circle )
+// BUFFER END
+
+* Rect mask - STORAGE BUFFER
+	float4 (x,y) position center (z,w) width height
+	// A single object is only going to use a single one, the mask should be properly computed by the computed
+	// A single rect mask can be reused by multiple elements
+
+* Border Radius - STORAGE BUFFER
+	float4 (x,y,z,w) top left, top right, bottom left, bottom right radius
+	//This is measured in pixel units
+
+* Texture position - STORAGE BUFFER
+	float3 (x,y) uv position (z) the texture array selection
+	// Considering this is only going to change if the data inside the textures change, then this buffer should be
+	// created and not be change until there is a change in the textures array currently in use
+	// A copy of the buffer with more information should be kept in the CPU for the other systems to be able to use it easily
+
+* Color
+
+
+////////////////////////////////////////
+///// LINE RENDERER
+////////////////////////////////////////
+Optimized to render lines using triangles
