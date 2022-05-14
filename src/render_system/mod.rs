@@ -27,6 +27,9 @@ impl RenderSystem {
             _ => false,
         }
     }
+    pub fn write_buffer(&self, buffer: &wgpu::Buffer, offset: wgpu::BufferAddress, data: &[u8]){
+        self.render_window.queue.write_buffer(buffer, offset, data);
+    }
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output: wgpu::SurfaceTexture = self.render_window.surface.get_current_texture()?;
         let screen_view = output
@@ -73,6 +76,17 @@ impl RenderSystem {
 			usage:  usage,
 			contents: data,
 		})
+    }
+    pub fn create_storage_buffer(&self, name: &str, data: &[u8], allow_update:bool) -> wgpu::Buffer{
+        let mut usage = wgpu::BufferUsages::STORAGE;
+        if allow_update {
+            usage |= wgpu::BufferUsages::COPY_DST;
+        }
+        self.create_buffer(&wgpu::util::BufferInitDescriptor{
+            label: Some(name),
+            usage: usage,
+            contents:data
+        })
     }
 	pub fn create_vertex_buffer(&self, name: &str, data: &[u8], allow_update: bool) -> wgpu::Buffer{
 		let mut usage = wgpu::BufferUsages::VERTEX;

@@ -183,6 +183,12 @@ fn create_font_sdf_texture(
         }
 
 		let sdf_bitmap = &sdf_bitmaps[index];
+        
+        let char_sdf_size = sdf_bitmap.len();
+        let expected_sdf_size = (slice.get_padded_width() * slice.get_padded_height()) as usize;
+
+        assert_eq!(char_sdf_size, expected_sdf_size, "SDF has incorrect size");
+        
 		for v_index in 0..slice.get_padded_height() {
 			let line_range = 
 				(v_index * slice.get_padded_width()) as usize 
