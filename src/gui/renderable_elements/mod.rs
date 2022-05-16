@@ -6,8 +6,9 @@ use wgpu::util::DeviceExt;
 pub mod cpu_gpu_buffer;
 pub mod collection;
 pub mod rect;
+pub mod texture_atlas;
 
-pub fn test_create_texture_array(render_system: &RenderSystem) {
+/*pub fn test_create_texture_array(render_system: &RenderSystem) {
 	let texture_size = wgpu::Extent3d {
 		width: 1024,
 		height: 1024,
@@ -38,4 +39,4 @@ pub fn test_create_texture_array(render_system: &RenderSystem) {
 			},
 			texture_size
 		);
-}
+}*/

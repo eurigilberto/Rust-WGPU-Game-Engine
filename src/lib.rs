@@ -30,7 +30,7 @@ fn close_event_request_handler(
     control_flow: &mut ControlFlow,
 ) -> bool {
     match event {
-        WindowEvent::CloseRequested
+        WindowEvent::CloseRequested 
         | WindowEvent::KeyboardInput {
             input:
                 KeyboardInput {

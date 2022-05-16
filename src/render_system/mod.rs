@@ -102,4 +102,10 @@ impl RenderSystem {
     pub fn configure_surface(&mut self) {
         self.render_window.configure_surface();
     }
+    pub fn create_texture(&self, descriptor: &wgpu::TextureDescriptor) -> wgpu::Texture{
+        self.render_window.device.create_texture(descriptor)
+    }
+    pub fn create_sampler(&self, descriptor: &wgpu::SamplerDescriptor) -> wgpu::Sampler{
+        self.render_window.device.create_sampler(descriptor)
+    }
 }
