@@ -1,10 +1,12 @@
-use std::num::{NonZeroU32, NonZeroU8};
 use crate::render_system::RenderSystem;
+use std::num::{NonZeroU32, NonZeroU8};
 
 pub struct TextureAtlas {
     pub texture: wgpu::Texture,
     pub viewer: wgpu::TextureView,
     pub sampler: wgpu::Sampler,
+    pub bind_group_layout: wgpu::BindGroupLayout,
+    pub bind_group: wgpu::BindGroup,
 }
 
 impl TextureAtlas {
@@ -51,10 +53,55 @@ impl TextureAtlas {
             mipmap_filter: wgpu::FilterMode::Linear,
         });
 
+        let bind_group_layout = render_system.render_window.device.create_bind_group_layout(
+            &wgpu::BindGroupLayoutDescriptor {
+                label: Some("Texture Atlas Bind Group Layout"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2Array,
+                            multisampled: false,
+                        },
+                        count: None,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        binding: 0,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        binding: 1,
+                    },
+                ],
+            },
+        );
+
+        let bind_group =
+            render_system
+                .render_window
+                .device
+                .create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("Texture Atlas Bind Group"),
+                    layout: &bind_group_layout,
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: wgpu::BindingResource::TextureView(&texture_view),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: wgpu::BindingResource::Sampler(&sampler),
+                        },
+                    ],
+                });
+
         Self {
             texture: texture,
             viewer: texture_view,
             sampler: sampler,
+            bind_group_layout,
+            bind_group,
         }
     }
 }

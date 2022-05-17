@@ -17,7 +17,7 @@ pub struct CPUGPUBuffer<T: bytemuck::Pod> {
     pub gpu_buffer: wgpu::Buffer,
     pub current_capacity: usize,
     pub name: String,
-	pub buffer_type: GrowableBufferType
+    pub buffer_type: GrowableBufferType,
 }
 
 pub fn create_cpu_gpu_buffer<T: bytemuck::Pod>(
@@ -44,13 +44,13 @@ pub fn create_cpu_gpu_buffer<T: bytemuck::Pod>(
         gpu_buffer: gpu_buffer,
         current_capacity: initial_capacity,
         name: String::from(name),
-		buffer_type: buffer_type
+        buffer_type: buffer_type,
     }
 }
 
 pub fn update_buffer<T: bytemuck::Pod>(
     cpu_gpu_buffer: &mut CPUGPUBuffer<T>,
-    render_system: &RenderSystem
+    render_system: &RenderSystem,
 ) {
     if cpu_gpu_buffer.current_capacity >= cpu_gpu_buffer.cpu_vector.len() {
         render_system.write_buffer(
@@ -73,4 +73,37 @@ pub fn update_buffer<T: bytemuck::Pod>(
             ),
         };
     }
+}
+
+pub fn get_binding<T: bytemuck::Pod>(
+    cpu_gpu_buffer: &mut CPUGPUBuffer<T>,
+    render_system: &RenderSystem,
+) {
+    let bind_group_layout = render_system.render_window.device.create_bind_group_layout(
+        &wgpu::BindGroupLayoutDescriptor {
+            label: Some("Bind Group Layout"),
+            entries: &[wgpu::BindGroupLayoutEntry {
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+                binding: 0,
+                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+            }],
+        },
+    );
+    render_system
+        .render_window
+        .device
+        .create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Bind Group"),
+            layout: &bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: cpu_gpu_buffer.gpu_buffer.as_entire_binding(),
+            }],
+        }
+    );
 }

@@ -1,7 +1,9 @@
 mod render_window;
 mod utils;
+use std::borrow::Cow;
+
 use render_window::RenderWindow;
-use wgpu::util::DeviceExt;
+use wgpu::{util::DeviceExt, VertexBufferLayout, ColorTargetState};
 use winit::event::WindowEvent;
 pub struct RenderSystem {
     pub render_window: RenderWindow,
@@ -107,5 +109,38 @@ impl RenderSystem {
     }
     pub fn create_sampler(&self, descriptor: &wgpu::SamplerDescriptor) -> wgpu::Sampler{
         self.render_window.device.create_sampler(descriptor)
+    }
+
+    pub fn create_shader_module_from_string(&self, shader_name: &str, shader_str: Cow<str>)->wgpu::ShaderModule{
+        self
+            .render_window
+            .device
+            .create_shader_module(&wgpu::ShaderModuleDescriptor {
+                label: Some(shader_name),
+                source: wgpu::ShaderSource::Wgsl(shader_str),
+            })
+    }
+    
+    pub fn create_vertex_fragment_shader_from_string<'a>(
+        &self,
+        shader_module: &'a wgpu::ShaderModule,
+        vertex_entry_point: &'a str,
+        vertex_buffer_layouts: &'a [VertexBufferLayout],
+        fragment_entry_point: &'a str,
+        color_target_states: &'a [ColorTargetState],
+    ) -> (wgpu::VertexState<'a>, wgpu::FragmentState<'a>) {
+        let vertex_state = wgpu::VertexState {
+            module: shader_module,
+            entry_point: vertex_entry_point,
+            buffers: vertex_buffer_layouts,
+        };
+    
+        let fragment_state = wgpu::FragmentState {
+            module: shader_module,
+            entry_point: fragment_entry_point,
+            targets: color_target_states,
+        };
+    
+        (vertex_state, fragment_state)
     }
 }
