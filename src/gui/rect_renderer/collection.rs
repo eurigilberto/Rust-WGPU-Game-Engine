@@ -1,7 +1,7 @@
 use crate::gui::rect_renderer::cpu_gpu_buffer::{
     create_cpu_gpu_buffer, update_buffer, CPUGPUBuffer, GrowableBufferType,
 };
-use crate::gui::rect_renderer::rect::RectGraphic;
+use crate::gui::rect_renderer::graphic::RectGraphic;
 use crate::render_system::RenderSystem;
 use crate::{color, render_system};
 
@@ -11,14 +11,14 @@ pub struct RectCollection {
     border_radius: CPUGPUBuffer<[f32; 4]>,
     texture_position: CPUGPUBuffer<[u32; 4]>,
     color: CPUGPUBuffer<[f32; 4]>,
-    storage_bind_group_layout: wgpu::BindGroupLayout,
-    storage_bind_group: wgpu::BindGroup
+    uniform_bind_group_layout: wgpu::BindGroupLayout,
+    uniform_bind_group: wgpu::BindGroup
 }
 
 fn bind_group_layout_entry(binding_index: u32) -> wgpu::BindGroupLayoutEntry {
     wgpu::BindGroupLayoutEntry {
         ty: wgpu::BindingType::Buffer {
-            ty: wgpu::BufferBindingType::Storage { read_only: true },
+            ty: wgpu::BufferBindingType::Uniform,
             has_dynamic_offset: false,
             min_binding_size: None,
         },
@@ -37,25 +37,25 @@ impl RectCollection {
             "Rect Collection",
         );
         let rect_mask = create_cpu_gpu_buffer::<[f32; 4]>(
-            GrowableBufferType::StorageBuffer,
+            GrowableBufferType::UniformBuffer,
             initial_capacity,
             render_system,
             "Rect Mask Collection",
         );
         let border_radius = create_cpu_gpu_buffer::<[f32; 4]>(
-            GrowableBufferType::StorageBuffer,
+            GrowableBufferType::UniformBuffer,
             initial_capacity,
             render_system,
             "Border Radius Collection",
         );
         let texture_position = create_cpu_gpu_buffer::<[u32; 4]>(
-            GrowableBufferType::StorageBuffer,
+            GrowableBufferType::UniformBuffer,
             initial_capacity,
             render_system,
             "Texture Position Collection",
         );
         let color = create_cpu_gpu_buffer::<[f32; 4]>(
-            GrowableBufferType::StorageBuffer,
+            GrowableBufferType::UniformBuffer,
             initial_capacity,
             render_system,
             "Color Collection",
@@ -106,8 +106,8 @@ impl RectCollection {
             border_radius,
             texture_position,
             color,
-            storage_bind_group_layout: bind_group_layout,
-            storage_bind_group: bind_group
+            uniform_bind_group_layout: bind_group_layout,
+            uniform_bind_group: bind_group
         }
     }
 

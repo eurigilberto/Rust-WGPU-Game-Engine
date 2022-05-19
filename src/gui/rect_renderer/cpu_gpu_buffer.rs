@@ -9,7 +9,7 @@ use crate::render_system::RenderSystem;
 
 pub enum GrowableBufferType {
     VertexBuffer,
-    StorageBuffer,
+    UniformBuffer,
 }
 
 pub struct CPUGPUBuffer<T: bytemuck::Pod> {
@@ -20,6 +20,17 @@ pub struct CPUGPUBuffer<T: bytemuck::Pod> {
     pub buffer_type: GrowableBufferType,
 }
 
+pub fn get_buffer_usage_from_buffer_type(buffer_type: &GrowableBufferType) -> wgpu::BufferUsages {
+    match buffer_type {
+        GrowableBufferType::VertexBuffer => {
+            wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST
+        }
+        GrowableBufferType::UniformBuffer => {
+            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST
+        }
+    }
+}
+
 pub fn create_cpu_gpu_buffer<T: bytemuck::Pod>(
     buffer_type: GrowableBufferType,
     initial_capacity: usize,
@@ -27,18 +38,11 @@ pub fn create_cpu_gpu_buffer<T: bytemuck::Pod>(
     name: &str,
 ) -> CPUGPUBuffer<T> {
     let cpu_vector = Vec::<T>::with_capacity(initial_capacity);
-    let gpu_buffer = match buffer_type {
-        GrowableBufferType::VertexBuffer => render_system.create_vertex_buffer(
-            name,
-            bytemuck::cast_slice(cpu_vector.as_slice()),
-            true,
-        ),
-        GrowableBufferType::StorageBuffer => render_system.create_storage_buffer(
-            name,
-            bytemuck::cast_slice(cpu_vector.as_slice()),
-            true,
-        ),
-    };
+    let gpu_buffer = render_system.create_buffer(
+        name,
+        bytemuck::cast_slice(cpu_vector.as_slice()),
+        get_buffer_usage_from_buffer_type(&buffer_type),
+    );
     CPUGPUBuffer::<T> {
         cpu_vector: cpu_vector,
         gpu_buffer: gpu_buffer,
@@ -60,18 +64,11 @@ pub fn update_buffer<T: bytemuck::Pod>(
         );
     } else {
         cpu_gpu_buffer.gpu_buffer.destroy();
-        cpu_gpu_buffer.gpu_buffer = match cpu_gpu_buffer.buffer_type {
-            GrowableBufferType::VertexBuffer => render_system.create_vertex_buffer(
-                &cpu_gpu_buffer.name,
-                bytemuck::cast_slice(cpu_gpu_buffer.cpu_vector.as_slice()),
-                true,
-            ),
-            GrowableBufferType::StorageBuffer => render_system.create_storage_buffer(
-                &cpu_gpu_buffer.name,
-                bytemuck::cast_slice(cpu_gpu_buffer.cpu_vector.as_slice()),
-                true,
-            ),
-        };
+        cpu_gpu_buffer.gpu_buffer = render_system.create_buffer(
+            cpu_gpu_buffer.name.as_str(),
+            bytemuck::cast_slice(cpu_gpu_buffer.cpu_vector.as_slice()),
+            get_buffer_usage_from_buffer_type(&cpu_gpu_buffer.buffer_type),
+        );
     }
 }
 
@@ -104,6 +101,5 @@ pub fn get_binding<T: bytemuck::Pod>(
                 binding: 0,
                 resource: cpu_gpu_buffer.gpu_buffer.as_entire_binding(),
             }],
-        }
-    );
+        });
 }

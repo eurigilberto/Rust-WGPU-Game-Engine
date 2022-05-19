@@ -29,7 +29,11 @@ impl EngineTime{
             delta_time_milis: 0.0
         };
         
-        let time_buffer = render_system.create_uniform_buffer("Engine Time", bytemuck::bytes_of(&time_data), true);
+        let time_buffer = render_system.create_buffer(
+            "Engine Time", 
+            bytemuck::bytes_of(&time_data),
+            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST
+        );
         
         Self{
             accumulated_time: 0,

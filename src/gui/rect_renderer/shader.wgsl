@@ -10,13 +10,11 @@ var<uniform> global_ui_data: GlobalUIData;
 struct VertexOutput {
 	[[location(0)]] vert_position: vec2<f32>;
 	//Instance data
-	[[location(1)]] rect_position: vec2<f32>;
-	[[location(2)]] rect_size: vec2<f32>;
-	[[location(3)]] color: vec4<f32>;
-	[[location(4)]] rect_round: vec4<f32>;
+	[[location(1)]] size: vec2<u32>;
+	
+	//[[location(2)]] data_vector_0: vec4<u32>,
+	//[[location(3)]] data_vector_1: vec4<u32>,
 
-	[[location(5)]] border_width: f32;
-	[[location(6)]] border_color: vec4<f32>;
 	//Required built in
     [[builtin(position)]] clip_position: vec4<f32>;
 };
@@ -25,17 +23,11 @@ struct VertexOutput {
 fn vs_main(
     [[builtin(vertex_index)]] in_vertex_index: u32,
 	[[builtin(instance_index)]] in_instance_index: u32, 
+	
 	//provided in normalized screen space
-	[[location(0)]] rect_position: vec2<f32>,
-	[[location(1)]] rect_size: vec2<f32>,
-	[[location(2)]] rect_depth: f32, //might not be used yet
-	//provided in screen space
-	[[location(3)]] rect_round: vec4<f32>,
-	//misc
-	[[location(4)]] color: vec4<f32>,
-
-	[[location(5)]] border_width: f32,
-	[[location(6)]] border_color: vec4<f32>,
+	[[location(0)]] position_size: vec4<u32>,
+	[[location(1)]] data_vector_0: vec4<u32>,
+	[[location(2)]] data_vector_1: vec4<u32>,
 ) -> VertexOutput {
 	var out: VertexOutput;
 	
@@ -46,21 +38,18 @@ fn vs_main(
 		vec2<f32>(-0.5, -0.5)
 	);
 
+	let r_position = vec2<f32>(position_size.x, position_size.y);
+	let r_size = vec2<f32>(position_size.z, position_size.w);
+
 	let vertex_position_offset: vec2<f32> = offset_list[in_vertex_index];
-	let position_offset: vec2<f32> = (vertex_position_offset * rect_size);
-	let vertex_position: vec2<f32> = position_offset + rect_position;
+	let position_offset: vec2<f32> = (vertex_position_offset * r_size);
+	let vertex_position: vec2<f32> = position_offset + r_position;
 
-    out.clip_position = vec4<f32>(vertex_position.x, vertex_position.y, rect_depth, 1.0);
+    out.clip_position = vec4<f32>(vertex_position.x, vertex_position.y, 0.0, 1.0);
 	out.vert_position = vertex_position;
-
-	let r_size = rect_size * vec2<f32>(global_ui_data.screen_width_height);
-	out.rect_position = vertex_position_offset * r_size;
-	out.rect_size = r_size * 0.5;
-
-	out.color = color;
-	out.rect_round = rect_round  * 2.0;
-    out.border_width = border_width * 2.0;
-	out.border_color = border_color;
+	
+	out.size = vec2<u32>(position_size.z, position_size.w);
+	
 	return out;
 }
 
@@ -81,20 +70,19 @@ fn sd_rounded_box(p: vec2<f32>, b: vec2<f32>, r: vec4<f32>) -> f32{
     return min(max(q.x, q.y), 0.0) + length(max(q, vec2<f32>(0.0,0.0))) - round.x;
 }
 
+struct FragmentOutput {
+	[[location(0)]] main_color: vec4<f32>,
+	[[location(1)]] ui_mask: u32
+}
+
 [[stage(fragment)]]
-fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
-	var dist = sd_rounded_box(in.rect_position, in.rect_size, in.rect_round);
+fn fs_main(in: VertexOutput) -> FragmentOutput {
+	//var dist = sd_rounded_box(in.rect_position, in.rect_size, in.rect_round);
+
+	var out: FragmentOutput;
+
+	out.main_color = vec4<f32>(1.0,0.0,0.0, 1.0);
+	out.ui_mask = 0;
 	
-	let alpha = 1.0 - clamp(dist, 0.0, 1.0);
-	if(alpha < 0.0001){
-		discard;
-	}else{
-		//let alpha = smoothStep(-0.05, 0.05, alpha);
-		var border_dist = dist + in.border_width;
-		border_dist = clamp(border_dist, 0.0, 1.0);
-		let r_color = in.color + border_dist * (in.border_color - in.color);
-		return vec4<f32>(r_color.xyz, r_color.w * alpha);
-	}
-	
-	//return vec4<f32>(1.0,0.0,0.0, 1.0);
+	return out;
 }

@@ -1,7 +1,5 @@
-use std::fs;
-
+use crate::gui::rect_renderer::render_textures;
 use crate::render_system::RenderSystem;
-use wgpu::{ColorTargetState, VertexBufferLayout};
 
 pub struct RectMaterial {
     render_pipeline: wgpu::RenderPipeline,
@@ -13,18 +11,7 @@ impl RectMaterial {
         bind_group_layouts: &[&wgpu::BindGroupLayout],
         vertex_buffer_layouts: &[wgpu::VertexBufferLayout],
     ) -> Self {
-        let color_states = [
-            wgpu::ColorTargetState {
-                blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-                format: wgpu::TextureFormat::Rgba16Float,
-                write_mask: wgpu::ColorWrites::all(),
-            },
-            wgpu::ColorTargetState {
-                blend: Some(wgpu::BlendState::REPLACE),
-                format: wgpu::TextureFormat::R16Uint,
-                write_mask: wgpu::ColorWrites::all(),
-            },
-        ];
+        let color_targets = render_textures::get_color_target_states();
 
         let gui_quad_shader_str = include_str!("./shader.wgsl");
         let shader_module = render_system.create_shader_module_from_string(
@@ -37,7 +24,7 @@ impl RectMaterial {
                 "vs_main",
                 vertex_buffer_layouts,
                 "fs_main",
-                &color_states,
+                &color_targets,
             );
 
         let pipeline_layout = render_system.render_window.device.create_pipeline_layout(

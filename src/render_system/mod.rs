@@ -65,42 +65,18 @@ impl RenderSystem {
         output.present();
         Ok(())
     }
-    pub fn create_buffer(&self, descriptor: &wgpu::util::BufferInitDescriptor) -> wgpu::Buffer {
+    pub fn create_buffer_descriptor(&self, descriptor: &wgpu::util::BufferInitDescriptor) -> wgpu::Buffer {
         self.render_window.device.create_buffer_init(descriptor)
     }
-    pub fn create_uniform_buffer(&self, name: &str, data: &[u8], allow_update: bool) -> wgpu::Buffer {
-		let mut usage = wgpu::BufferUsages::UNIFORM;
-		if allow_update {
-			usage |= wgpu::BufferUsages::COPY_DST;
-		}
-        self.create_buffer(&wgpu::util::BufferInitDescriptor {
-			label: Some(name),
-			usage:  usage,
-			contents: data,
-		})
-    }
-    pub fn create_storage_buffer(&self, name: &str, data: &[u8], allow_update:bool) -> wgpu::Buffer{
-        let mut usage = wgpu::BufferUsages::STORAGE;
-        if allow_update {
-            usage |= wgpu::BufferUsages::COPY_DST;
-        }
-        self.create_buffer(&wgpu::util::BufferInitDescriptor{
+    pub fn create_buffer(&self, name: &str, data: &[u8], usage: wgpu::BufferUsages)-> wgpu::Buffer{
+        let descriptor = wgpu::util::BufferInitDescriptor{
             label: Some(name),
             usage: usage,
-            contents:data
-        })
+            contents: data
+        };
+        self.create_buffer_descriptor(&descriptor)
     }
-	pub fn create_vertex_buffer(&self, name: &str, data: &[u8], allow_update: bool) -> wgpu::Buffer{
-		let mut usage = wgpu::BufferUsages::VERTEX;
-		if allow_update {
-			usage |= wgpu::BufferUsages::COPY_DST;
-		}
-		self.create_buffer(&wgpu::util::BufferInitDescriptor {
-			label: Some(name),
-			usage:  usage,
-			contents: data,
-		})
-	}
+    
     pub fn configure_surface(&mut self) {
         self.render_window.configure_surface();
     }
