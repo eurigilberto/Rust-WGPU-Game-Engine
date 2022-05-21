@@ -2,11 +2,17 @@ mod render_window;
 mod utils;
 use std::borrow::Cow;
 
+pub mod texture;
+pub mod render_texture;
 use render_window::RenderWindow;
 use wgpu::{util::DeviceExt, VertexBufferLayout, ColorTargetState};
 use winit::event::WindowEvent;
 pub struct RenderSystem {
     pub render_window: RenderWindow,
+}
+
+pub fn uniform_usage()->wgpu::BufferUsages{
+    wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST
 }
 
 impl RenderSystem {
@@ -32,7 +38,7 @@ impl RenderSystem {
     pub fn write_buffer(&self, buffer: &wgpu::Buffer, offset: wgpu::BufferAddress, data: &[u8]){
         self.render_window.queue.write_buffer(buffer, offset, data);
     }
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    /*pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output: wgpu::SurfaceTexture = self.render_window.surface.get_current_texture()?;
         let screen_view = output
             .texture
@@ -64,7 +70,7 @@ impl RenderSystem {
             .submit(std::iter::once(encoder.finish()));
         output.present();
         Ok(())
-    }
+    }*/
     pub fn create_buffer_descriptor(&self, descriptor: &wgpu::util::BufferInitDescriptor) -> wgpu::Buffer {
         self.render_window.device.create_buffer_init(descriptor)
     }
