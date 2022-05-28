@@ -6,6 +6,7 @@ pub mod gui;
 pub mod render_system;
 pub use wgpu;
 pub use bytemuck;
+pub mod slotmap;
 
 use winit::{
     event::*,
@@ -97,6 +98,7 @@ impl Engine {
                 }
             ]
         });
+
         Self {
             render_system,
             window,

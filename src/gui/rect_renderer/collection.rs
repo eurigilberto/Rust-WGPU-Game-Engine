@@ -5,7 +5,7 @@ use crate::gui::rect_renderer::graphic::RectGraphic;
 use crate::render_system::RenderSystem;
 
 pub struct RectCollection {
-    rect_graphic: CPUGPUBuffer<RectGraphic>,
+    pub rect_graphic: CPUGPUBuffer<RectGraphic>,
     rect_mask: CPUGPUBuffer<[f32; 4]>,
     border_radius: CPUGPUBuffer<[f32; 4]>,
     texture_position: CPUGPUBuffer<[u32; 4]>,

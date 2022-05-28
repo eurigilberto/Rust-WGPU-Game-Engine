@@ -38,6 +38,64 @@ impl RenderSystem {
     pub fn write_buffer(&self, buffer: &wgpu::Buffer, offset: wgpu::BufferAddress, data: &[u8]){
         self.render_window.queue.write_buffer(buffer, offset, data);
     }
+
+    pub fn create_buffer_descriptor(&self, descriptor: &wgpu::util::BufferInitDescriptor) -> wgpu::Buffer {
+        self.render_window.device.create_buffer_init(descriptor)
+    }
+    pub fn create_buffer(&self, name: &str, data: &[u8], usage: wgpu::BufferUsages)-> wgpu::Buffer{
+        let descriptor = wgpu::util::BufferInitDescriptor{
+            label: Some(name),
+            usage: usage,
+            contents: data
+        };
+        self.create_buffer_descriptor(&descriptor)
+    }
+    
+    pub fn configure_surface(&mut self) {
+        self.render_window.configure_surface();
+    }
+    pub fn create_texture(&self, descriptor: &wgpu::TextureDescriptor) -> wgpu::Texture{
+        self.render_window.device.create_texture(descriptor)
+    }
+    pub fn create_sampler(&self, descriptor: &wgpu::SamplerDescriptor) -> wgpu::Sampler{
+        self.render_window.device.create_sampler(descriptor)
+    }
+
+    pub fn create_shader_module_from_string(&self, shader_name: &str, shader_str: Cow<str>)->wgpu::ShaderModule{
+        self
+            .render_window
+            .device
+            .create_shader_module(&wgpu::ShaderModuleDescriptor {
+                label: Some(shader_name),
+                source: wgpu::ShaderSource::Wgsl(shader_str),
+            })
+    }
+    
+    pub fn create_vertex_fragment_state<'a>(
+        &self,
+        shader_module: &'a wgpu::ShaderModule,
+        vertex_entry_point: &'a str,
+        vertex_buffer_layouts: &'a [VertexBufferLayout],
+        fragment_entry_point: &'a str,
+        color_target_states: &'a [ColorTargetState],
+    ) -> (wgpu::VertexState<'a>, wgpu::FragmentState<'a>) {
+        let vertex_state = wgpu::VertexState {
+            module: shader_module,
+            entry_point: vertex_entry_point,
+            buffers: vertex_buffer_layouts,
+        };
+    
+        let fragment_state = wgpu::FragmentState {
+            module: shader_module,
+            entry_point: fragment_entry_point,
+            targets: color_target_states,
+        };
+    
+        (vertex_state, fragment_state)
+    }
+}
+
+
     /*pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output: wgpu::SurfaceTexture = self.render_window.surface.get_current_texture()?;
         let screen_view = output
@@ -71,58 +129,3 @@ impl RenderSystem {
         output.present();
         Ok(())
     }*/
-    pub fn create_buffer_descriptor(&self, descriptor: &wgpu::util::BufferInitDescriptor) -> wgpu::Buffer {
-        self.render_window.device.create_buffer_init(descriptor)
-    }
-    pub fn create_buffer(&self, name: &str, data: &[u8], usage: wgpu::BufferUsages)-> wgpu::Buffer{
-        let descriptor = wgpu::util::BufferInitDescriptor{
-            label: Some(name),
-            usage: usage,
-            contents: data
-        };
-        self.create_buffer_descriptor(&descriptor)
-    }
-    
-    pub fn configure_surface(&mut self) {
-        self.render_window.configure_surface();
-    }
-    pub fn create_texture(&self, descriptor: &wgpu::TextureDescriptor) -> wgpu::Texture{
-        self.render_window.device.create_texture(descriptor)
-    }
-    pub fn create_sampler(&self, descriptor: &wgpu::SamplerDescriptor) -> wgpu::Sampler{
-        self.render_window.device.create_sampler(descriptor)
-    }
-
-    pub fn create_shader_module_from_string(&self, shader_name: &str, shader_str: Cow<str>)->wgpu::ShaderModule{
-        self
-            .render_window
-            .device
-            .create_shader_module(&wgpu::ShaderModuleDescriptor {
-                label: Some(shader_name),
-                source: wgpu::ShaderSource::Wgsl(shader_str),
-            })
-    }
-    
-    pub fn create_vertex_fragment_shader_from_string<'a>(
-        &self,
-        shader_module: &'a wgpu::ShaderModule,
-        vertex_entry_point: &'a str,
-        vertex_buffer_layouts: &'a [VertexBufferLayout],
-        fragment_entry_point: &'a str,
-        color_target_states: &'a [ColorTargetState],
-    ) -> (wgpu::VertexState<'a>, wgpu::FragmentState<'a>) {
-        let vertex_state = wgpu::VertexState {
-            module: shader_module,
-            entry_point: vertex_entry_point,
-            buffers: vertex_buffer_layouts,
-        };
-    
-        let fragment_state = wgpu::FragmentState {
-            module: shader_module,
-            entry_point: fragment_entry_point,
-            targets: color_target_states,
-        };
-    
-        (vertex_state, fragment_state)
-    }
-}

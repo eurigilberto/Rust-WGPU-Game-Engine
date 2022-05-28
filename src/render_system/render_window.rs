@@ -22,7 +22,7 @@ impl RenderWindow {
             })
             .await
             .unwrap();
-
+            
         let (device, queue) = adapter
             .request_device(
                 &wgpu::DeviceDescriptor {

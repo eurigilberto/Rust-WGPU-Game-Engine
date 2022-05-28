@@ -2,7 +2,7 @@ use crate::gui::rect_renderer::render_textures;
 use crate::render_system::RenderSystem;
 
 pub struct RectMaterial {
-    render_pipeline: wgpu::RenderPipeline,
+    pub render_pipeline: wgpu::RenderPipeline,
 }
 
 impl RectMaterial {
@@ -19,7 +19,7 @@ impl RectMaterial {
             std::borrow::Cow::Borrowed(gui_quad_shader_str),
         );
         let (vertex_state, fragment_state) = render_system
-            .create_vertex_fragment_shader_from_string(
+            .create_vertex_fragment_state(
                 &shader_module,
                 "vs_main",
                 vertex_buffer_layouts,
