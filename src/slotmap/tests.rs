@@ -138,6 +138,79 @@ mod tests {
 	}
     #[test]
     fn removing_multiple_values_can_make_free_buckets_to_merge_on_a_partially_filled_slotmap(){
-        
+        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut slot_keys = Vec::<SlotKey>::with_capacity(25);
+        for i in 0..24 {
+            if let PushResult::Result(key) = u32_slotmap.push(i) {
+                slot_keys.push(key);
+            } else {
+                panic!("Could not push value")
+            }
+        }
+
+        let check_value = |expected_value: u32, slot_result: Option<u32>| match slot_result {
+            Some(value) => {
+                assert_eq!(
+                    value, expected_value,
+                    "Resulting value -{}- is not the expected one -{}-",
+                    value, expected_value
+                );
+				println!("Removed element {}", value);
+            }
+            None => {
+                panic!("Expected a value to be returned")
+            }
+        };
+
+		check_value(0, u32_slotmap.remove(slot_keys[0]));
+        check_value(2, u32_slotmap.remove(slot_keys[2]));
+        check_value(1, u32_slotmap.remove(slot_keys[1]));
+
+		check_value(4, u32_slotmap.remove(slot_keys[4]));
+
+        let slice = u32_slotmap.free_list_slice();
+        assert_eq!(slice[0], (0, 3));
+    }
+    #[test]
+    fn an_iterator_can_be_created_from_a_partially_filled_slotmap(){
+        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut slot_keys = Vec::<SlotKey>::with_capacity(25);
+        for i in 0..24 {
+            if let PushResult::Result(key) = u32_slotmap.push(i) {
+                slot_keys.push(key);
+            } else {
+                panic!("Could not push value")
+            }
+        }
+        let slice = u32_slotmap.free_list_slice();
+        assert_eq!(slice[0], (24, 100));
+
+        for (index, val) in u32_slotmap.get_iter().enumerate(){
+            assert_eq!(index as u32, *val, "The stored value is not the correct one | expected {} - found {} |", index as u32, *val);
+        }
+    }
+    #[test]
+    fn a_mutable_iterator_can_be_created_from_a_partially_filled_slotmap(){
+        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut slot_keys = Vec::<SlotKey>::with_capacity(25);
+        for i in 0..24 {
+            if let PushResult::Result(key) = u32_slotmap.push(i) {
+                slot_keys.push(key);
+            } else {
+                panic!("Could not push value")
+            }
+        }
+        let slice = u32_slotmap.free_list_slice();
+        assert_eq!(slice[0], (24, 100));
+
+        for (index, val) in u32_slotmap.get_iter_mut().enumerate(){
+            assert_eq!(index as u32, *val, "The stored value is not the correct one | expected {} - found {} |", index as u32, *val);
+            *val += 2;
+        }
+
+        for (index, val) in u32_slotmap.get_iter().enumerate(){
+            let expected_value = index as u32 + 2;
+            assert_eq!(expected_value, *val, "The stored value is not the correct one | expected {} - found {} |", expected_value, *val);
+        }
     }
 }
