@@ -1,7 +1,8 @@
 use crate::{
     render_system::{texture, RenderSystem},
-    slotmap::slotmap::Slotmap, EngineSlotmapKeys,
+    slotmap::slotmap::Slotmap,
 };
+use crate::EngineSlotmapKeys;
 use glam::UVec2;
 use std::borrow::{Borrow, Cow};
 
