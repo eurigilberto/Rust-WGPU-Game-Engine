@@ -2,7 +2,7 @@ use crate::render_system::{RenderSystem, self};
 
 use super::{system::GUIRectSystem, render_textures::GUIRenderTexture};
 
-fn create_render_pass<'a>(
+/*fn create_render_pass<'a>(
 	encoder: &'a mut wgpu::CommandEncoder,
 	gui_render_texture: &'a GUIRenderTexture,
 ) -> wgpu::RenderPass<'a> {
@@ -70,7 +70,7 @@ fn render_gui(
 ) {
 	let render_pass = create_render_pass(encoder, &rect_system.render_texture);
 	draw_render_pass(render_pass, rect_system, system_bind_group);
-}
+}*/
 
 pub struct GUIRenderPassData {
     pub bind_group_layout: wgpu::BindGroupLayout,

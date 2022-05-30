@@ -1,4 +1,4 @@
-use std::slice::{Iter, IterMut};
+use std::{slice::{Iter, IterMut}};
 
 use super::{
     free_list::FreeList,
@@ -17,14 +17,8 @@ pub struct SlotKey {
     generation: Generation,
 }
 
-#[derive(Debug)]
-pub enum PushResult {
-    Result(SlotKey),
-    CapacityOverflow,
-    NoFreeSlotsAvailable,
-}
-
-///This structure is optimized for random access and iteration
+/// This structure is optimized for random access and iteration
+/// Adding an elment costs less than Removing an elemnt
 pub struct Slotmap<V> {
     values: Vec<V>,
     ///Array with the slot indexes for the slots that are pointing to a value, this array has the same order as the Values array
@@ -121,6 +115,25 @@ impl<V> Slotmap<V> {
         }
     }
 
+    /// This function uses the `Vec::reserve_exact` internally to increase the available space
+    /// If the `self.len() + aditional` is smaller than `self.capacity()`, then no space is allocated.\
+    /// Increased capacity is equatl to `max( 0, self.len() + aditional - self.capacity() )`
+    pub fn reserve_exact(&mut self, aditional: usize) -> Option<usize> {
+        let current_capacity = self.capacity();
+        
+        self.values.reserve_exact(aditional);
+        self.values_slot.reserve_exact(aditional);
+
+        let new_capacity = self.capacity();
+
+        let extra_capacity = new_capacity - current_capacity;
+        if extra_capacity > 0 {
+            self.free_list.add_free_bucket_to_tail(current_capacity, extra_capacity);
+            return Some(extra_capacity)
+        }
+        None
+    }
+
     pub fn remove(&mut self, key: SlotKey) -> Option<V> {
         if self.is_valid(&key) {
 			//todo!("If the value that is going to be swaped is the last array element, then the swap is not perfromed and the element is just removed, the current code does not reflect that and panics in that case");
@@ -151,9 +164,9 @@ impl<V> Slotmap<V> {
         }
     }
 
-    pub fn push(&mut self, value: V) -> PushResult {
+    pub fn push(&mut self, value: V) -> Option<SlotKey> {
         if self.values.capacity() == self.values.len() {
-            PushResult::CapacityOverflow
+            None
         } else {
             self.values.push(value);
             //Get an available lot to put as a stable renference to the added element
@@ -162,9 +175,9 @@ impl<V> Slotmap<V> {
                     self.values_slot.push(free_slot);
                     let slot_key = self.take_slot(free_slot, self.values.len() - 1);
 
-                    PushResult::Result(slot_key)
+                    Some(slot_key)
                 }
-                None => PushResult::NoFreeSlotsAvailable,
+                None => None,
             }
         }
     }

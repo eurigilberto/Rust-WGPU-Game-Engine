@@ -1,23 +1,28 @@
-use crate::render_system::{texture, RenderSystem};
+use crate::{
+    render_system::{texture, RenderSystem},
+    slotmap::slotmap::Slotmap, EngineSlotmapKeys,
+};
 use glam::UVec2;
-use std::borrow::Cow;
+use std::borrow::{Borrow, Cow};
 
-pub struct RenderTexture<'a> {
-    pub texture_descriptor: wgpu::TextureDescriptor<'a>,
-    pub texture_view_descriptor: wgpu::TextureViewDescriptor<'a>,
+pub struct RenderTexture {
+    pub format: wgpu::TextureFormat,
+    pub size: UVec2,
+    pub texture_name: String,
+    pub texture_view_name: String,
 
     pub texture: wgpu::Texture,
     pub texture_view: wgpu::TextureView,
 }
 
-impl<'a> RenderTexture<'a> {
+impl RenderTexture {
     pub fn new(
         format: wgpu::TextureFormat,
         size: UVec2,
         render_system: &RenderSystem,
 
-        texture_name: &'a str,
-        texture_view_name: &'a str,
+        texture_name: &str,
+        texture_view_name: &str,
     ) -> Self {
         let texture_descriptor =
             texture::create_render_texture_descriptor(format, size.x, size.y, Some(texture_name));
@@ -35,34 +40,54 @@ impl<'a> RenderTexture<'a> {
         let texture_view = texture.create_view(&texture_view_descriptor);
 
         Self {
-            texture_descriptor,
-            texture_view_descriptor,
-
+            format,
             texture,
             texture_view,
+            size,
+            texture_name: String::from(texture_name),
+            texture_view_name: String::from(texture_view_name),
+        }
+    }
+
+    pub fn create_and_store(
+        format: wgpu::TextureFormat,
+        size: UVec2,
+        render_system: &RenderSystem,
+
+        texture_name: &str,
+        texture_view_name: &str,
+        render_texture_slotmap: &mut Slotmap<RenderTexture>,
+    ) -> Option<EngineSlotmapKeys> {
+
+        let render_texture = Self::new(format, size, render_system, texture_name, texture_view_name);
+        let push_result = render_texture_slotmap.push(render_texture);
+        match push_result {
+            Some(slot_key) => Some(EngineSlotmapKeys::RenderTexture(slot_key)),
+            None => None,
+        }
+    }
+
+    pub fn get_texture_view_descriptor(&self) -> wgpu::TextureViewDescriptor {
+        wgpu::TextureViewDescriptor {
+            label: Some(self.texture_name.as_str()),
+            format: Some(self.format),
+            dimension: Some(wgpu::TextureViewDimension::D2),
+            aspect: wgpu::TextureAspect::All,
+            ..Default::default()
         }
     }
 
     pub fn resize_texture(&mut self, new_size: UVec2, render_system: &RenderSystem) {
-        self.texture_descriptor.size.width = new_size.x;
-        self.texture_descriptor.size.height = new_size.y;
-
+        let texture_descriptor = texture::create_render_texture_descriptor(
+            self.format,
+            new_size.x,
+            new_size.y,
+            Some(self.texture_name.as_str()),
+        );
         self.texture.destroy();
-        self.texture = render_system.create_texture(&self.texture_descriptor);
-        self.texture_view = self.texture.create_view(&self.texture_view_descriptor);
+        self.texture = render_system.create_texture(&texture_descriptor);
+
+        let texture_view_descriptor = self.get_texture_view_descriptor();
+        self.texture_view = self.texture.create_view(&texture_view_descriptor);
     }
 }
-
-/*
-let texture_sampler = if create_sampler {
-            let mut sampler_desc = wgpu::SamplerDescriptor {
-                label: Some(sampler_name),
-                ..Default::default()
-            };
-            texture::set_all_address_mode(&mut sampler_desc, wgpu::AddressMode::ClampToEdge);
-            texture::set_all_filters(&mut sampler_desc, wgpu::FilterMode::Linear);
-            Some(render_system.create_sampler(&sampler_desc))
-        } else {
-            None
-        };
-     */

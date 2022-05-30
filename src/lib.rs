@@ -4,6 +4,8 @@ mod engine_time;
 pub mod font;
 pub mod gui;
 pub mod render_system;
+use render_system::render_texture::RenderTexture;
+use slotmap::slotmap::Slotmap;
 pub use wgpu;
 pub use bytemuck;
 pub mod slotmap;
@@ -14,7 +16,27 @@ use winit::{
     window::WindowBuilder,
 };
 
+pub type RenderTextureSlotmap = Slotmap<RenderTexture>;
 
+pub enum EngineDataSlotmapTypes{
+    RenderTexture(slotmap::slotmap::Slotmap<RenderTexture>)
+}
+
+pub struct PublicDataSlotmap<T: Into<EngineDataSlotmapTypes> + From<EngineDataSlotmapTypes>>{
+    pub data_containers: Vec<T>
+}
+
+pub enum EngineSystemTypes{
+
+}
+
+pub enum EngineSlotmapKeys{
+    RenderTexture(slotmap::slotmap::SlotKey)
+}
+
+pub struct Entity<T: Into<EngineSlotmapKeys> + From<EngineSlotmapKeys>>{
+    pub components: Vec<T>
+}
 
 fn create_window(
     event_loop: &EventLoop<()>,

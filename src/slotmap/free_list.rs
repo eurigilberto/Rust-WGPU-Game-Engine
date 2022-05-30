@@ -39,11 +39,11 @@ impl FreeBucket {
     }
 }
 
-impl Drop for FreeBucket {
+/*impl Drop for FreeBucket {
     fn drop(&mut self) {
         println!("{} - {} Space dropped", self.start_index, self.end_index);
     }
-}
+}*/
 
 pub struct FreeList {
     head: Option<Rc<RefCell<FreeBucket>>>,
@@ -133,6 +133,49 @@ impl FreeList {
     pub fn len(&self) -> usize {
         let slice = self.create_list_slice();
         slice.len()
+    }
+
+    pub fn get_tail(&self) -> Option<Rc<RefCell<FreeBucket>>>{
+        match &self.head {
+            Some(head) => {
+                let mut current_tail = Rc::clone(head);
+
+                loop {
+                    let next_bucket = RefCell::borrow(&current_tail).get_next_bucket();
+                    match next_bucket {
+                        Some(next_bucket) => {
+                            current_tail = next_bucket;
+                        },
+                        None => {break;},
+                    }
+                }
+
+                Some(Rc::clone(&current_tail))
+            },
+            None => None, // If there is no head, then the  
+        }
+    }
+
+    /// Adds a bucket to the tail or grows the current tail if possible 
+    pub fn add_free_bucket_to_tail(&mut self, index: SlotIndex, size: usize){
+        let new_bucket = FreeBucket::new_multiple_slot(index, size);
+        let new_bucket = Rc::new(RefCell::new(new_bucket));
+        match self.get_tail() {
+            Some(tail) => {
+                let tail_end_index = RefCell::borrow(&tail).end_index;
+                if tail_end_index == index{
+                    //Merge new bucket with existing tail, as it would be next to it in memory
+                    FreeList::merge_buckets(tail, new_bucket);
+                } else {
+                    //New bucket is not connected to the existing tail, so it is going to become the new tail
+                    RefCell::borrow_mut(&tail).next_bucket.replace(new_bucket);
+                }
+            },
+            None => {
+                // There are no buckets so this bucket is going to be added as the head
+                self.head.replace(new_bucket);
+            },
+        }
     }
 
     pub fn add_free_slot(&mut self, slot_index: SlotIndex) {
