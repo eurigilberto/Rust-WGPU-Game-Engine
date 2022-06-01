@@ -17,4 +17,19 @@ From the specified processes above some part of the GUI system needs to:
 
 A needed change from the previous system is that the "window" elements should have an update function that does not assume anything about where they are being rendered, which would make it easier for them to be used as part of other windowing schemes, like tabs.
 
+The functions for the window trait should be:
+
+- **fn** get_name
+- **fn** update (for a tab system only the "get_name" function might be used if the window is currently hidden)
+- **fn** allow_resize
+- **fn** get_requested_size <- this should point to an internal variable of the object.
+
+where is the window position and size going to be handled?
+For the position and size of the tab system, the same code that is going to call update is going to send the size, and screen cursor position. If it is a window then the system is going to create a window for it and send the position data on the update function.
+
+A "window" entity could also create windows managed by itself, but that is unadvisable as it could enter in conflic with the other layout systems.
+How could a window tell the window system to create a new one of any type? and how to make sure it can keep a reference to that window?
+
+On all updates the Public Data Slotmap (PDS) is always going to be sent as a mutable reference to it, so if a new window needs to be created and "managed" to an extent by that other "window", then a PDS entity needs to be created on the spot, the key is going to be stored in the window, and a "create" event is going to be added to the event queue of the system. That "create" event needs to hold the key to that PDS entity that was created so that it can update itself after changes are made to that data.
+
 The GUI windows entities cannot be updated directly from the other entities, if some data needs to be sent to an specific window then a public data entity has to be updated instead, and the UI should change its layout accordingly.
