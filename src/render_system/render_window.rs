@@ -1,14 +1,16 @@
+use glam::{UVec2, uvec2};
+
 pub struct RenderWindow {
     pub surface: wgpu::Surface,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
-    pub size: winit::dpi::PhysicalSize<u32>,
+    pub size: UVec2,
 }
 
 impl RenderWindow {
     pub async fn new(window: &winit::window::Window) -> Self {
-        let size = window.inner_size();
+        let size = uvec2(window.inner_size().width, window.inner_size().height);
 
         // The instance is a handle to our GPU
         // Backends::all => Vulkan + Metal + DX12 + Browser WebGPU
@@ -39,8 +41,8 @@ impl RenderWindow {
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface.get_preferred_format(&adapter).unwrap(),
-            width: size.width,
-            height: size.height,
+            width: size.x,
+            height: size.y,
             present_mode: wgpu::PresentMode::Immediate,
         };
         surface.configure(&device, &config);
@@ -56,9 +58,9 @@ impl RenderWindow {
 
     pub fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
         if size.width > 2 && size.height > 2 {
-            self.size = size;
-            self.config.width = self.size.width;
-            self.config.height = self.size.height;
+            self.size = uvec2(size.width, size.height);
+            self.config.width = self.size.x;
+            self.config.height = self.size.x;
             self.surface.configure(&self.device, &self.config);
         }
     }

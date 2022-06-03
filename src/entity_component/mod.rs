@@ -52,13 +52,8 @@ pub struct PublicDataSlotmap<T: Into<EngineDataSlotmapTypes> + From<EngineDataSl
     pub data_containers: Vec<T>,
 }
 
-pub enum EngineSystemTypes {}
-
 pub enum EngineSlotmapKeys {
     RenderTexture(SlotKey),
-    WindowTypeA(SlotKey),
-    WindowTypeB(SlotKey),
-    WindowTypeC(SlotKey),
 }
 
 pub struct Entity<T: Into<EngineSlotmapKeys> + From<EngineSlotmapKeys>> {

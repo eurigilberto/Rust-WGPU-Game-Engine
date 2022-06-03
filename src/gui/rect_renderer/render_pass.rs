@@ -1,6 +1,6 @@
 use crate::render_system::{RenderSystem, self};
 
-use super::{system::GUIRectSystem, render_textures::GUIRenderTexture};
+use super::{system::GUIRects, render_textures::GUIRenderTexture};
 
 /*fn create_render_pass<'a>(
 	encoder: &'a mut wgpu::CommandEncoder,
@@ -96,8 +96,8 @@ impl GUIRenderPassData {
             },
         );
 
-        let width = render_system.render_window.size.width;
-        let height = render_system.render_window.size.height;
+        let width = render_system.render_window.size.x;
+        let height = render_system.render_window.size.y;
         let buffer = render_system.create_buffer(
             "GUI render pass buffer",
             bytemuck::bytes_of(&[glam::vec4(width as f32, height as f32, 0.0, 0.0)]),
