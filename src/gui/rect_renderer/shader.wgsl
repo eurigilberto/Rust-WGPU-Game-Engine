@@ -1,10 +1,34 @@
 //This shader is meant to be the used for the rect instances
 //that needs to be rendered.
-struct GlobalUIData{
-	screen_width_height: vec2<f32>;
+struct SystemData{
+	//time
+    //delta_time
+    //time_milis
+    //delta_time_milis
+	time_data: vec4<f32>;
 };
 [[group(0), binding(0)]]
 var<uniform> global_ui_data: GlobalUIData;
+
+struct GUIRenderpassData{
+	screen_size: vec4<f32>;
+}
+[[group(1), binding(0)]]
+var<uniform> gui_render_pass_data: GUIRenderpassData;
+
+[[group(2), binding(0)]]
+var<uniform> rect_mask: array<vec4<f32>>;
+[[group(2), binding(1)]]
+var<uniform> border_radius: array<vec4<f32>>;
+[[group(2), binding(2)]]
+var<uniform> texture_position: array<vec4<u32>>;
+[[group(2), binding(3)]]
+var<uniform> color: array<vec4<f32>>;
+
+[[group(3), binding(0)]]
+var texture_atlas: texture_2d_array<f32>;
+[[group(3), binding(1)]]
+var texture_atlas_sampler: sampler;
 
 // Vertex shader
 struct VertexOutput {

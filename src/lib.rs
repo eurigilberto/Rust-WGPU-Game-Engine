@@ -1,4 +1,4 @@
-use std::ops::{Deref, DerefMut};
+use std::{ops::{Deref, DerefMut}, task::Poll};
 
 pub use glam;
 pub mod color;
@@ -82,7 +82,8 @@ pub fn render<R: 'static + Runtime>(
         .queue
         .submit(command_buffers);
     output.present();
-
+    //let on_gpu_done = engine.render_system.render_window.queue.on_submitted_work_done();
+    //pollster::block_on(on_gpu_done);
     Ok(())
 }
 
@@ -148,6 +149,8 @@ pub fn start_engine_loop<R: 'static + Runtime>(
                         .update_buffer(&engine.render_system.render_window.queue);
 
                     runtime.handle_event_queue(&event_queue, &mut close_app);
+                    event_queue.clear();
+                    
                     runtime.update(&engine);
                     let render_result = render(&mut engine, &mut runtime);
                     
