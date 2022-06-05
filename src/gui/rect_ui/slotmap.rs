@@ -32,7 +32,7 @@ impl<T, E: GUIContainer<T>> DerefMut for GUISlotmaps<T, E> {
 
 pub trait GUIContainer<T> {
     fn get_name(&self) -> &String;
-    fn update(&self, event: &UIEvent, public_data: Slotmap<T>);
+    fn update(&self, event: &UIEvent, public_data: &mut Slotmap<T>);
     fn allow_resize(&self) -> bool;
     fn get_size(&self) -> UVec2;
 }

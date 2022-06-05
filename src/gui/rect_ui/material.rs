@@ -1,4 +1,4 @@
-use crate::gui::rect_renderer::render_textures;
+use crate::gui::rect_ui::render_textures;
 use crate::render_system::RenderSystem;
 
 pub struct RectMaterial {

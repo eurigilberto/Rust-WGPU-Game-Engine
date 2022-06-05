@@ -1,7 +1,7 @@
-use crate::gui::rect_renderer::cpu_gpu_buffer::{
+use crate::gui::rect_ui::cpu_gpu_buffer::{
     create_cpu_gpu_buffer, update_buffer, CPUGPUBuffer, GrowableBufferType,
 };
-use crate::gui::rect_renderer::graphic::RectGraphic;
+use crate::gui::rect_ui::graphic::RectGraphic;
 use crate::render_system::RenderSystem;
 
 pub struct RectCollection {

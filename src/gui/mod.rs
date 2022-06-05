@@ -1,1 +1,1 @@
-pub mod rect_renderer;
+pub mod rect_ui;
