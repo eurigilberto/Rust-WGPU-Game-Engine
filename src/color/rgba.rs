@@ -111,7 +111,7 @@ impl From<RGBA> for HSLA {
 
         let cmin = f32::min(f32::min(rgba.r, rgba.g), rgba.b);
         let delta = cmax.0 - cmin;
-        let mut hue;
+        let hue;
         let lightness = (cmax.0 - cmin) / 2.0;
         let mut sat = 0.0;
         if f32::abs(delta) > f32::EPSILON {

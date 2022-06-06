@@ -1,6 +1,6 @@
 use glam::UVec2;
 
-use crate::{render_system::{self, RenderSystem}, RenderTextureSlotmap};
+use crate::{render_system::{RenderSystem}, RenderTextureSlotmap};
 
 use super::{
     collection::RectCollection, graphic::RectGraphic, material::RectMaterial,

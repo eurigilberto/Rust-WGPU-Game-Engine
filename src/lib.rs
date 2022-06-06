@@ -1,5 +1,3 @@
-use std::{ops::{Deref, DerefMut}, task::Poll};
-
 pub use glam;
 pub mod color;
 mod engine_time;
@@ -16,7 +14,7 @@ pub mod slotmap;
 pub use engine::Engine;
 pub mod entity_component;
 pub use self::entity_component::{
-    EngineDataSlotmapTypes, EngineSlotmapKeys, RenderTextureSlotmap,
+    EngineDataType, RenderTextureSlotmap,
 };
 pub mod runtime;
 pub use runtime::Runtime;

@@ -1,5 +1,5 @@
 mod render_window;
-mod utils;
+pub mod utils;
 use std::borrow::Cow;
 
 pub mod texture;

@@ -1,7 +1,7 @@
-use glam::{uvec2, vec4, UVec2, Vec4};
+use glam::{uvec2, UVec2};
 use half::f16;
 use rayon::iter::{
-    IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
+    IntoParallelRefIterator,  ParallelIterator,
 };
 use sdf_glyph_renderer::{render_sdf, BitmapGlyph};
 
@@ -44,15 +44,15 @@ pub enum FontCreationError {
 }
 
 pub struct FontAtlas {
-    font_glyphs: Vec<FontTextureSlice>,
-	font_sdf_texture: Vec<f16>
+    pub font_glyphs: Vec<FontTextureSlice>,
+	pub font_sdf_texture: Vec<f16>
 }
 
 fn parse_font_from_bytes(font_bytes: &[u8], scale: f32) -> fontdue::FontResult<fontdue::Font> {
     fontdue::Font::from_bytes(
         font_bytes,
         fontdue::FontSettings {
-            scale: 64.0,
+            scale,
             ..Default::default()
         },
     )
@@ -123,7 +123,7 @@ fn create_character_bitmaps(
 
         //Add glyph data to texture
         font.metrics_indexed(char_index, character_size);
-        let (metrics, bitmap) = font.rasterize_indexed(char_index, character_size);
+        let (_, bitmap) = font.rasterize_indexed(char_index, character_size);
 
         //Create intermidiate character bitmap with buffer zone
         let padded_width = slice.metrics.width + buffer_size * 2;

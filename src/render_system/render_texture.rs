@@ -1,10 +1,9 @@
 use crate::{
+    entity_component::{EngineDataKey, EngineDataTypeKey},
     render_system::{texture, RenderSystem},
     slotmap::slotmap::Slotmap,
 };
-use crate::EngineSlotmapKeys;
 use glam::UVec2;
-use std::borrow::{Borrow, Cow};
 
 pub struct RenderTexture {
     pub format: wgpu::TextureFormat,
@@ -58,12 +57,15 @@ impl RenderTexture {
         texture_name: &str,
         texture_view_name: &str,
         render_texture_slotmap: &mut Slotmap<RenderTexture>,
-    ) -> Option<EngineSlotmapKeys> {
-
-        let render_texture = Self::new(format, size, render_system, texture_name, texture_view_name);
+    ) -> Option<EngineDataKey> {
+        let render_texture =
+            Self::new(format, size, render_system, texture_name, texture_view_name);
         let push_result = render_texture_slotmap.push(render_texture);
         match push_result {
-            Some(slot_key) => Some(EngineSlotmapKeys::RenderTexture(slot_key)),
+            Some(slot_key) => Some(EngineDataKey {
+                map_key: EngineDataTypeKey::RenderTexture,
+                key: slot_key,
+            }),
             None => None,
         }
     }

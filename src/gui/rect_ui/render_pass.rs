@@ -1,17 +1,18 @@
 use crate::render_system::{RenderSystem, self};
 
-use super::{system::GUIRects, render_textures::GUIRenderTexture};
+use super::{system::GUIRects};
 
-/*fn create_render_pass<'a>(
+fn create_render_pass<'a>(
 	encoder: &'a mut wgpu::CommandEncoder,
-	gui_render_texture: &'a GUIRenderTexture,
+	color_texture_view: &'a wgpu::TextureView,
+	mask_texture_view: &'a wgpu::TextureView
 ) -> wgpu::RenderPass<'a> {
 	encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
 		label: Some("GUI Render Pass"),
 		color_attachments: &[
 			wgpu::RenderPassColorAttachment {
 				resolve_target: None,
-				view: &gui_render_texture.color_texture.texture_view,
+				view: color_texture_view,
 				ops: wgpu::Operations {
 					load: wgpu::LoadOp::Clear(wgpu::Color {
 						..Default::default()
@@ -21,7 +22,7 @@ use super::{system::GUIRects, render_textures::GUIRenderTexture};
 			},
 			wgpu::RenderPassColorAttachment {
 				resolve_target: None,
-				view: &gui_render_texture.mask_texture.texture_view,
+				view: mask_texture_view,
 				ops: wgpu::Operations {
 					load: wgpu::LoadOp::Clear(wgpu::Color {
 						..Default::default()
@@ -36,41 +37,43 @@ use super::{system::GUIRects, render_textures::GUIRenderTexture};
 
 fn draw_render_pass<'a>(
 	mut render_pass: wgpu::RenderPass<'a>,
-	rect_system: &'a GUIRectSystem,
+	rect_system: &'a GUIRects,
 	system_bind_group: &'a wgpu::BindGroup,
 ) {
 	render_pass.set_pipeline(&rect_system.rect_material.render_pipeline);
 
 	render_pass.set_bind_group(0, system_bind_group, &[]);
 	render_pass.set_bind_group(1, &rect_system.render_pass_data.bind_group, &[]);
-	render_pass.set_bind_group(2, &rect_system.rect_data_collection.uniform_bind_group, &[]);
+	render_pass.set_bind_group(2, &rect_system.rect_collection.uniform_bind_group, &[]);
 	render_pass.set_bind_group(3, &rect_system.texture_atlas.bind_group, &[]);
 
 	render_pass.set_vertex_buffer(
 		0,
 		rect_system
-			.rect_data_collection
+			.rect_collection
 			.rect_graphic
 			.gpu_buffer
 			.slice(..),
 	);
 
 	let instance_count = rect_system
-		.rect_data_collection
+		.rect_collection
 		.rect_graphic
 		.cpu_vector
 		.len() as u32;
 	render_pass.draw(0..4, 0..instance_count);
 }
 
-fn render_gui(
+pub fn render_gui(
 	encoder: &mut wgpu::CommandEncoder,
-	rect_system: &GUIRectSystem,
+	rect_system: &GUIRects,
 	system_bind_group: &wgpu::BindGroup,
+	color_texture_view: &wgpu::TextureView,
+	mask_texture_view: &wgpu::TextureView
 ) {
-	let render_pass = create_render_pass(encoder, &rect_system.render_texture);
+	let render_pass = create_render_pass(encoder, color_texture_view, mask_texture_view);
 	draw_render_pass(render_pass, rect_system, system_bind_group);
-}*/
+}
 
 pub struct GUIRenderPassData {
     pub bind_group_layout: wgpu::BindGroupLayout,

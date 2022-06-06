@@ -1,4 +1,4 @@
-use std::{slice::{Iter, IterMut}, any::TypeId};
+use std::{slice::{Iter, IterMut}};
 
 use super::{
     free_list::FreeList,
@@ -17,8 +17,7 @@ pub struct SlotKey {
     generation: Generation,
 }
 
-/// This structure is optimized for random access and iteration
-/// Adding an elment costs less than Removing an elemnt
+/// This structure is optimized in the following order iteration > random acess > pushing objects > removing objects
 pub struct Slotmap<V> {
     values: Vec<V>,
     ///Array with the slot indexes for the slots that are pointing to a value, this array has the same order as the Values array

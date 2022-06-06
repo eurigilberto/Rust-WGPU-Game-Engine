@@ -10,7 +10,7 @@ pub trait Runtime {
         engine: &mut Engine,
         screen_view: &wgpu::TextureView,
         encoder: &mut wgpu::CommandEncoder,
-    ) -> bool;
+    );
     fn frame_end<F>(&mut self, exit_event_loop: &mut F)
     where
         F: FnMut() -> ();

@@ -4,7 +4,7 @@ pub mod texture_utils {
         render_texture: &wgpu::TextureView,
         clear_color: wgpu::Color,
         depth_texture: Option<&wgpu::TextureView>,
-        depth_clear_value: f32,
+        depth_clear_value: Option<f32>,
         stencil_clear_value: Option<u32>
     ) {
         let render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -22,7 +22,7 @@ pub mod texture_utils {
                     Some(wgpu::RenderPassDepthStencilAttachment{
                         view: texture_view,
                         depth_ops: Some(wgpu::Operations{
-                            load: wgpu::LoadOp::Clear(depth_clear_value),
+                            load: wgpu::LoadOp::Clear(depth_clear_value.unwrap_or(0.0)),
                             store: true
                         }),
                         stencil_ops: match stencil_clear_value {
