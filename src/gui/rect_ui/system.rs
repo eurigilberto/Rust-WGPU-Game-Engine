@@ -47,4 +47,8 @@ impl GUIRects {
             render_texture,
         }
     }
+
+    pub fn resize(&mut self, new_size: UVec2, render_system: &RenderSystem){
+        self.render_pass_data.resize(new_size, render_system);
+    }
 }

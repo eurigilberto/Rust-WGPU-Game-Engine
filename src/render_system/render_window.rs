@@ -56,12 +56,12 @@ impl RenderWindow {
         }
     }
 
-    pub fn resize(&mut self, size: winit::dpi::PhysicalSize<u32>) {
-        if size.width > 2 && size.height > 2 {
-            self.size = uvec2(size.width, size.height);
+    pub fn resize(&mut self, size: UVec2) {
+        if size.x > 2 && size.y > 2 {
+            self.size = size;
             self.config.width = self.size.x;
-            self.config.height = self.size.x;
-            self.surface.configure(&self.device, &self.config);
+            self.config.height = self.size.y;
+            self.configure_surface();
         }
     }
 

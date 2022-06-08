@@ -6,10 +6,10 @@ use crate::render_system::RenderSystem;
 
 pub struct RectCollection {
     pub rect_graphic: CPUGPUBuffer<RectGraphic>,
-    rect_mask: CPUGPUBuffer<[f32; 4]>,
-    border_radius: CPUGPUBuffer<[f32; 4]>,
-    texture_position: CPUGPUBuffer<[u32; 4]>,
-    color: CPUGPUBuffer<[f32; 4]>,
+    pub rect_mask: CPUGPUBuffer<[f32; 4]>,
+    pub border_radius: CPUGPUBuffer<[f32; 4]>,
+    pub texture_position: CPUGPUBuffer<[u32; 4]>,
+    pub color: CPUGPUBuffer<[f32; 4]>,
     pub uniform_bind_group_layout: wgpu::BindGroupLayout,
     pub uniform_bind_group: wgpu::BindGroup
 }
@@ -17,7 +17,7 @@ pub struct RectCollection {
 fn bind_group_layout_entry(binding_index: u32) -> wgpu::BindGroupLayoutEntry {
     wgpu::BindGroupLayoutEntry {
         ty: wgpu::BindingType::Buffer {
-            ty: wgpu::BufferBindingType::Uniform,
+            ty: wgpu::BufferBindingType::Storage { read_only: true },
             has_dynamic_offset: false,
             min_binding_size: None,
         },
@@ -36,25 +36,25 @@ impl RectCollection {
             "Rect Collection",
         );
         let rect_mask = create_cpu_gpu_buffer::<[f32; 4]>(
-            GrowableBufferType::UniformBuffer,
+            GrowableBufferType::StorageBuffer,
             initial_capacity,
             render_system,
             "Rect Mask Collection",
         );
         let border_radius = create_cpu_gpu_buffer::<[f32; 4]>(
-            GrowableBufferType::UniformBuffer,
+            GrowableBufferType::StorageBuffer,
             initial_capacity,
             render_system,
             "Border Radius Collection",
         );
         let texture_position = create_cpu_gpu_buffer::<[u32; 4]>(
-            GrowableBufferType::UniformBuffer,
+            GrowableBufferType::StorageBuffer,
             initial_capacity,
             render_system,
             "Texture Position Collection",
         );
         let color = create_cpu_gpu_buffer::<[f32; 4]>(
-            GrowableBufferType::UniformBuffer,
+            GrowableBufferType::StorageBuffer,
             initial_capacity,
             render_system,
             "Color Collection",
@@ -116,5 +116,13 @@ impl RectCollection {
         update_buffer(&mut self.border_radius, render_system);
         update_buffer(&mut self.texture_position, render_system);
         update_buffer(&mut self.color, render_system);
+    }
+
+    pub fn clear_buffers(&mut self){
+        self.rect_graphic.clear_buffer();
+        self.rect_mask.clear_buffer();
+        self.border_radius.clear_buffer();
+        self.texture_position.clear_buffer();
+        self.color.clear_buffer();
     }
 }

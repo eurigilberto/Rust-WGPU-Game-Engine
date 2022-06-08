@@ -10,6 +10,7 @@ use crate::render_system::RenderSystem;
 pub enum GrowableBufferType {
     VertexBuffer,
     UniformBuffer,
+    StorageBuffer,
 }
 
 pub struct CPUGPUBuffer<T: bytemuck::Pod> {
@@ -20,6 +21,13 @@ pub struct CPUGPUBuffer<T: bytemuck::Pod> {
     pub buffer_type: GrowableBufferType,
 }
 
+impl <T: bytemuck::Pod> CPUGPUBuffer<T>{
+    /// This function only clears the data in the CPU vector
+    pub fn clear_buffer(&mut self){
+        self.cpu_vector.clear();
+    }
+}
+
 pub fn get_buffer_usage_from_buffer_type(buffer_type: &GrowableBufferType) -> wgpu::BufferUsages {
     match buffer_type {
         GrowableBufferType::VertexBuffer => {
@@ -28,16 +36,19 @@ pub fn get_buffer_usage_from_buffer_type(buffer_type: &GrowableBufferType) -> wg
         GrowableBufferType::UniformBuffer => {
             wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST
         }
+        GrowableBufferType::StorageBuffer => {
+            wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST
+        }
     }
 }
 
-pub fn create_cpu_gpu_buffer<T: bytemuck::Pod>(
+pub fn create_cpu_gpu_buffer<T: bytemuck::Pod + Default>(
     buffer_type: GrowableBufferType,
     initial_capacity: usize,
     render_system: &RenderSystem,
     name: &str,
 ) -> CPUGPUBuffer<T> {
-    let cpu_vector = Vec::<T>::with_capacity(initial_capacity);
+    let cpu_vector = std::vec::from_elem(T::default(), initial_capacity);
     let gpu_buffer = render_system.create_buffer(
         name,
         bytemuck::cast_slice(cpu_vector.as_slice()),

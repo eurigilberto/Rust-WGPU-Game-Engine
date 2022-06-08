@@ -53,8 +53,8 @@ impl EngineTime {
     /// Returns TRUE if the the system should update
     pub fn update_time(&mut self) -> bool {
         let now = std::time::Instant::now();
-        let dt = now - self.last_render_time;
-        self.accumulated_time += dt.as_millis();
+        let time_since_last_render = now - self.last_render_time;
+        self.accumulated_time = time_since_last_render.as_millis();
 
         if self.accumulated_time >= self.frame_time_milis {
             self.last_render_time = now;

@@ -2,7 +2,7 @@ use crate::entity_component::EngineDataKey;
 use crate::render_system::render_texture::RenderTexture;
 use crate::render_system::RenderSystem;
 use crate::RenderTextureSlotmap;
-use glam::uvec2;
+use glam::{uvec2, vec2};
 
 pub fn get_color_target_states() -> [wgpu::ColorTargetState; 2] {
     [
@@ -12,7 +12,7 @@ pub fn get_color_target_states() -> [wgpu::ColorTargetState; 2] {
             write_mask: wgpu::ColorWrites::all(),
         },
         wgpu::ColorTargetState {
-            blend: Some(wgpu::BlendState::REPLACE),
+            blend: None,
             format: wgpu::TextureFormat::R16Uint,
             write_mask: wgpu::ColorWrites::all(),
         },
@@ -37,6 +37,7 @@ impl GUIRenderTexture {
             render_system,
             "GUI Color Texture",
             "GUI Color Texture View",
+            Some(vec2(1.0,1.0)),
             render_texture_slotmap,
         );
 
@@ -46,6 +47,7 @@ impl GUIRenderTexture {
             render_system,
             "GUI Mask Texture",
             "GUI Mask Texture View",
+            Some(vec2(1.0,1.0)),
             render_texture_slotmap,
         );
 

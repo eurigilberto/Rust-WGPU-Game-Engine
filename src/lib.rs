@@ -7,6 +7,7 @@ pub mod render_system;
 
 pub use bytemuck;
 use glam::{uvec2, UVec2};
+use render_system::RenderSystem;
 pub use wgpu;
 pub use winit;
 pub mod engine;
@@ -81,6 +82,7 @@ pub fn render<R: 'static + Runtime>(
         .submit(command_buffers);
     output.present();
     //let on_gpu_done = engine.render_system.render_window.queue.on_submitted_work_done();
+    //engine.render_system.render_window.device.poll(wgpu::Maintain::Poll);
     //pollster::block_on(on_gpu_done);
     Ok(())
 }
@@ -93,10 +95,32 @@ pub enum EngineEvent {
     },
 }
 
-fn push_event(event_queue: &mut Vec<EngineEvent>, event: winit::event::WindowEvent) {
+fn is_resize_event(event: &winit::event::WindowEvent) -> bool{
+    if let WindowEvent::ScaleFactorChanged { .. } | WindowEvent::Resized(..) = event {
+        return true;
+    }
+    return false;
+}
+
+fn push_event(event_queue: &mut Vec<EngineEvent>, event: winit::event::WindowEvent, engine: &mut Engine) {
     if event_queue.len() == event_queue.capacity() {
         panic!("Event Queue is full")
     } else {
+        if is_resize_event(&event) {
+            //Remove any resize event that is currently on the queue
+            let mut found_resize = false;
+            let mut remove_index = 0;
+            for (index, ee) in event_queue.into_iter().enumerate(){
+                if let EngineEvent::ScaleFactorChanged { .. } | EngineEvent::WinitEvent(WindowEvent::Resized(..)) = ee {
+                    remove_index = index;
+                    found_resize = true;
+                    break;
+                }
+            }
+            if found_resize {
+                event_queue.remove(remove_index);
+            }
+        }
         if let WindowEvent::ScaleFactorChanged {
             scale_factor,
             new_inner_size,
@@ -127,6 +151,7 @@ pub fn start_engine_loop<R: 'static + Runtime>(
     event_loop: EventLoop<()>,
 ) {
     engine.time.reset();
+    let mut first_frame = true;
     let mut event_queue = Vec::<EngineEvent>::with_capacity(50);
     event_loop.run(move |event, _, control_flow| {
         match event {
@@ -134,7 +159,7 @@ pub fn start_engine_loop<R: 'static + Runtime>(
                 runtime.before_exit(&mut engine);
             }
             Event::WindowEvent { event, window_id } if window_id == engine.window.id() => {
-                push_event(&mut event_queue, event);
+                push_event(&mut event_queue, event, &mut engine);
             }
             Event::MainEventsCleared => {
                 if engine.time.update_time() {
@@ -145,8 +170,11 @@ pub fn start_engine_loop<R: 'static + Runtime>(
                     engine
                         .time
                         .update_buffer(&engine.render_system.render_window.queue);
-
-                    runtime.handle_event_queue(&event_queue, &mut close_app);
+                    if !first_frame {
+                        runtime.handle_event_queue(&event_queue, &mut engine, &mut close_app);
+                    }else{
+                        first_frame = false;
+                    }
                     event_queue.clear();
                     
                     runtime.update(&engine);
@@ -154,12 +182,17 @@ pub fn start_engine_loop<R: 'static + Runtime>(
                     
                     match render_result {
                         Ok(_) => {
-                            runtime.frame_end(&mut close_app);
+                            runtime.frame_end(&mut engine,&mut close_app);
                         }
                         // Reconfigure the surface if lost
                         Err(wgpu::SurfaceError::Lost) => engine.render_system.configure_surface(),
                         // The system is out of memory, we should probably quit
                         Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
+                        // ///
+                        Err(wgpu::SurfaceError::Outdated) => {
+                            println!("Outdated Surface!");
+                            engine.render_system.configure_surface()
+                        },
                         // All other errors (Outdated, Timeout) should be resolved by the next frame
                         Err(e) => eprintln!("{:?}", e),
                     }

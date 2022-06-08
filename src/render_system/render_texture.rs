@@ -3,7 +3,7 @@ use crate::{
     render_system::{texture, RenderSystem},
     slotmap::slotmap::Slotmap,
 };
-use glam::UVec2;
+use glam::{UVec2, Vec2};
 
 pub struct RenderTexture {
     pub format: wgpu::TextureFormat,
@@ -13,6 +13,8 @@ pub struct RenderTexture {
 
     pub texture: wgpu::Texture,
     pub texture_view: wgpu::TextureView,
+
+    pub scale_size_to_surface: Option<Vec2> //if some, then the render texture is meant to be scaled with the surface texture
 }
 
 impl RenderTexture {
@@ -23,6 +25,8 @@ impl RenderTexture {
 
         texture_name: &str,
         texture_view_name: &str,
+
+        scale_size_to_surface: Option<Vec2>
     ) -> Self {
         let texture_descriptor =
             texture::create_render_texture_descriptor(format, size.x, size.y, Some(texture_name));
@@ -46,6 +50,7 @@ impl RenderTexture {
             size,
             texture_name: String::from(texture_name),
             texture_view_name: String::from(texture_view_name),
+            scale_size_to_surface
         }
     }
 
@@ -56,10 +61,12 @@ impl RenderTexture {
 
         texture_name: &str,
         texture_view_name: &str,
+        scale_size_to_surface: Option<Vec2>,
+
         render_texture_slotmap: &mut Slotmap<RenderTexture>,
     ) -> Option<EngineDataKey> {
         let render_texture =
-            Self::new(format, size, render_system, texture_name, texture_view_name);
+            Self::new(format, size, render_system, texture_name, texture_view_name, scale_size_to_surface);
         let push_result = render_texture_slotmap.push(render_texture);
         match push_result {
             Some(slot_key) => Some(EngineDataKey {
@@ -80,15 +87,15 @@ impl RenderTexture {
         }
     }
 
-    pub fn resize_texture(&mut self, new_size: UVec2, render_system: &RenderSystem) {
+    pub fn resize_texture(&mut self, new_size: UVec2, render_system: &mut RenderSystem) {
         let texture_descriptor = texture::create_render_texture_descriptor(
             self.format,
             new_size.x,
             new_size.y,
             Some(self.texture_name.as_str()),
         );
-        self.texture.destroy();
-        self.texture = render_system.create_texture(&texture_descriptor);
+        let destroyed_texture = std::mem::replace(&mut self.texture, render_system.create_texture(&texture_descriptor));
+        render_system.queue_destroy_texture(destroyed_texture);
 
         let texture_view_descriptor = self.get_texture_view_descriptor();
         self.texture_view = self.texture.create_view(&texture_view_descriptor);

@@ -19,16 +19,11 @@ impl Engine {
 		title: &str,
 	) -> winit::window::Window {
 		let window = WindowBuilder::new()
+            .with_inner_size(winit::dpi::LogicalSize::new(width, height))
 			.with_decorations(true)
 			.build(event_loop)
 			.unwrap();
 		window.set_title(title);
-		window.set_inner_size(winit::dpi::LogicalSize::new(width, height));
-		/*window
-		.set_cursor_grab(true)
-		.expect("Windows does not support cursor Grab");*/
-		//window.set_cursor_visible(false);
-		//window.set_fullscreen(Some(winit::window::Fullscreen::Borderless(None)));
 		window
 	}
 

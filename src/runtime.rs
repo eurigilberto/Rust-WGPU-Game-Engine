@@ -1,7 +1,7 @@
-use crate::{Engine, EngineEvent};
+use crate::{Engine, EngineEvent, render_system::RenderSystem};
 
 pub trait Runtime {
-    fn handle_event_queue<F>(&mut self, event_queue: &Vec<EngineEvent>, exit_event_loop: &mut F)
+    fn handle_event_queue<F>(&mut self, event_queue: &Vec<EngineEvent>, engine: &mut Engine, exit_event_loop: &mut F)
     where
         F: FnMut() -> ();
     fn update(&mut self, engine: &Engine);
@@ -11,7 +11,7 @@ pub trait Runtime {
         screen_view: &wgpu::TextureView,
         encoder: &mut wgpu::CommandEncoder,
     );
-    fn frame_end<F>(&mut self, exit_event_loop: &mut F)
+    fn frame_end<F>(&mut self, engine: &mut Engine, exit_event_loop: &mut F)
     where
         F: FnMut() -> ();
     fn before_exit(&mut self, engine: &Engine);

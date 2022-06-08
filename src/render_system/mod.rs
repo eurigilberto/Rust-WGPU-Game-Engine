@@ -1,38 +1,44 @@
 mod render_window;
-pub mod utils;
 use std::borrow::Cow;
 
 pub mod texture;
 pub mod render_texture;
+use glam::{uvec2, UVec2};
 use render_window::RenderWindow;
-use wgpu::{util::DeviceExt, VertexBufferLayout, ColorTargetState};
+use wgpu::{util::{DeviceExt}, VertexBufferLayout, ColorTargetState};
 use winit::event::WindowEvent;
+
+use crate::EngineEvent;
+pub mod copy_texture_to_surface;
 pub struct RenderSystem {
     pub render_window: RenderWindow,
+    pub destroy_texture_queue: Vec<wgpu::Texture>
 }
 
 pub fn uniform_usage()->wgpu::BufferUsages{
     wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST
 }
 
+pub enum TextureSamplerType{
+    LinearClampToEdge
+}
+
 impl RenderSystem {
     pub async fn new(window: &winit::window::Window) -> Self {
         let render_window = RenderWindow::new(window).await;
-        Self { render_window }
+        let destroy_texture_queue = Vec::<wgpu::Texture>::with_capacity(20);
+        Self { render_window, destroy_texture_queue }
     }
-    pub fn resize_event_handler(&mut self, event: &winit::event::WindowEvent) -> bool {
+    pub fn resize_event_transformation(event: &EngineEvent) -> Option<UVec2> {
         match event {
-            WindowEvent::Resized(physical_size) => {
+            EngineEvent::WinitEvent(WindowEvent::Resized(physical_size)) => {
                 let new_size = physical_size.clone();
-                self.render_window.resize(new_size);
-                true
+                return Some(uvec2(new_size.width, new_size.height));
             }
-            WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                let new_size = (**new_inner_size).clone();
-                self.render_window.resize(new_size);
-                true
+            EngineEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                return Some(*new_inner_size);
             }
-            _ => false,
+            _ => return None,
         }
     }
     pub fn write_buffer(&self, buffer: &wgpu::Buffer, offset: wgpu::BufferAddress, data: &[u8]){
@@ -93,39 +99,29 @@ impl RenderSystem {
     
         (vertex_state, fragment_state)
     }
-}
 
+    pub fn create_texture_sampler(&self, label: &str, sampler_type: TextureSamplerType) -> wgpu::Sampler{
+        let mut sampler_descriptor = wgpu::SamplerDescriptor{
+            label:Some(label),
+            ..Default::default()
+        };
 
-    /*pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-        let output: wgpu::SurfaceTexture = self.render_window.surface.get_current_texture()?;
-        let screen_view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-        let mut encoder =
-            self.render_window
-                .device
-                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                    label: Some("Render Encoder"),
-                });
-		
-        utils::texture_utils::clear_render_targets(
-            &mut encoder,
-            &screen_view,
-            wgpu::Color {
-                r: 1.0,
-                g: 0.5,
-                b: 0.0,
-                a: 1.0,
+        match sampler_type {
+            TextureSamplerType::LinearClampToEdge => {
+                texture::set_all_filters(&mut sampler_descriptor, wgpu::FilterMode::Linear);
+                texture::set_all_address_mode(&mut sampler_descriptor, wgpu::AddressMode::ClampToEdge);
+                self.render_window.device.create_sampler(&sampler_descriptor)
             },
-            None,
-            0.0,
-            None,
-        );
-        //A bunch of render related stuff
+        }   
+    }
 
-        self.render_window
-            .queue
-            .submit(std::iter::once(encoder.finish()));
-        output.present();
-        Ok(())
-    }*/
+    pub fn queue_destroy_texture(&mut self, texture: wgpu::Texture){
+        self.destroy_texture_queue.push(texture);
+    }
+
+    pub fn destroy_queued_textures(&mut self){
+        for texture in self.destroy_texture_queue.drain(..){
+            texture.destroy();
+        }
+    }
+}
