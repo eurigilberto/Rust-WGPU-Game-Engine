@@ -3,7 +3,8 @@ use super::RenderSystem;
 pub struct CopyTextureToSurface{
 	pub render_pipeline: wgpu::RenderPipeline,
 	pub bind_group_layout: wgpu::BindGroupLayout,
-	pub bind_group: wgpu::BindGroup
+	pub bind_group: wgpu::BindGroup,
+	texture_sampler: wgpu::Sampler
 }
 
 impl CopyTextureToSurface {
@@ -80,11 +81,12 @@ impl CopyTextureToSurface {
 		let texture_sampler = render_system.create_texture_sampler("Copy Texture to Surface Sampler", super::TextureSamplerType::LinearClampToEdge);
 
 		let bind_group = CopyTextureToSurface::create_bind_group(&bind_group_layout, &render_system.render_window.device, texture_view, &texture_sampler);
-
+		
 		Self{
 			render_pipeline,
 			bind_group_layout,
-			bind_group
+			bind_group,
+			texture_sampler
 		}
 	}
 
@@ -107,6 +109,10 @@ impl CopyTextureToSurface {
 				}
 			]
 		})
+	}
+
+	pub fn update_texture_view(&mut self, texture_view: &wgpu::TextureView, render_system: &RenderSystem){
+		self.bind_group = Self::create_bind_group(&self.bind_group_layout, &render_system.render_window.device, texture_view, &self.texture_sampler);
 	}
 
 	pub fn render(&mut self, encoder: &mut wgpu::CommandEncoder, screen_view: &wgpu::TextureView){

@@ -59,33 +59,28 @@ fn parse_font_from_bytes(font_bytes: &[u8], scale: f32) -> fontdue::FontResult<f
 }
 
 impl FontAtlas {
-    pub fn new(file_path: &str, reqested_size: UVec2) -> Result<Self, FontCreationError> {
-        // Read the font data.
-        match std::fs::read(file_path) {
-            Ok(file_data) => {
-                match parse_font_from_bytes(file_data.as_slice(), 64.0) {
-                    Ok(font) => {
-                        let mut slice_coords = create_character_slices(&font, 64.0, 8);
-                        let bitmaps = create_character_bitmaps(&font, &slice_coords, 64.0, 8);
-                        let bitmaps_sdf_half = generate_sdf_bitmaps(&bitmaps, 8);
-						match create_font_sdf_texture(&mut slice_coords, &bitmaps_sdf_half, reqested_size ){
-							Ok(font_sdf_texture) => {
-								return Ok(Self{
-									font_glyphs: slice_coords,
-									font_sdf_texture: font_sdf_texture
-								});
-							},
-							Err(error) => {
-								return Err(error);
-							}
-						}
-                    }
+    pub fn new(file_data: Vec<u8>, reqested_size: UVec2) -> Result<Self, FontCreationError> {
+        // Read the font data. std::fs::read(file_path)
+        match parse_font_from_bytes(file_data.as_slice(), 64.0) {
+            Ok(font) => {
+                let mut slice_coords = create_character_slices(&font, 64.0, 8);
+                let bitmaps = create_character_bitmaps(&font, &slice_coords, 64.0, 8);
+                let bitmaps_sdf_half = generate_sdf_bitmaps(&bitmaps, 8);
+                match create_font_sdf_texture(&mut slice_coords, &bitmaps_sdf_half, reqested_size ){
+                    Ok(font_sdf_texture) => {
+                        return Ok(Self{
+                            font_glyphs: slice_coords,
+                            font_sdf_texture: font_sdf_texture
+                        });
+                    },
                     Err(error) => {
-                        return Err(FontCreationError::FontFileParsing(String::from(error)))
+                        return Err(error);
                     }
                 }
             }
-            Err(error) => return Err(FontCreationError::FileRead(error)),
+            Err(error) => {
+                return Err(FontCreationError::FontFileParsing(String::from(error)))
+            }
         }
     }
 }
