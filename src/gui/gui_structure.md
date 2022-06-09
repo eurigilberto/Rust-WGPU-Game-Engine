@@ -46,7 +46,7 @@ All the blocks are going to be rendered with all the faces facing the same direc
 	- X - Border Color index
 	- Y - Sample Color Channel
 	- Z - Border Size
-	- W - Texture Mask Value | Element Type
+	- W - Texture Mask Value 24 MSB | Element Type 8 LSB
 
 ## Extra storage buffers
 

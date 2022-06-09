@@ -10,6 +10,7 @@ use glam::{uvec2, UVec2};
 use render_system::RenderSystem;
 pub use wgpu;
 pub use winit;
+pub use half;
 pub mod engine;
 pub mod slotmap;
 pub use engine::Engine;
