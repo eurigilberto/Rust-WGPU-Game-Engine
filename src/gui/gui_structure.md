@@ -66,7 +66,7 @@ This are meant to store data that is not going to be
 	- **vec4\<u32\>** 
 		- **x , y** top left corner position of the `texture slice`.
 		- **z** a packed u32 that holds the `size` of the `texture slice`.
-		- **w** the texture array selection.
+		- **w** the texture array selection and the component selection.
 	- Considering this is only going to change if the data inside the textures change, then this buffer should be created and not be change until there is a change in the textures array currently in use 
 	- A copy of the buffer with more information should be kept in the CPU for the other systems to be able to use it easily
 

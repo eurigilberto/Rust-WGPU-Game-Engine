@@ -51,6 +51,8 @@ struct VertexOutput {
 	[[location(7)]] data_vector_0: vec4<u32>;
 	[[location(8)]] data_vector_1: vec4<u32>;
 
+	//[[location(9)]] test_u32: u32;
+
 	//Required built in
     [[builtin(position)]] clip_position: vec4<f32>;
 };
@@ -117,8 +119,10 @@ fn vs_main(
 		let tx_size_offset = tx_size_offset_mult[in_vertex_index] * tx_size;
 
 		out.texture_position = (tx_pos_start + tx_size_offset) / vec2<f32>(1024.0, 1024.0);
+		//out.test_u32 = tx_pos_data.w & u32(0x0000000f);
 	}else{
 		out.texture_position = vec2<f32>(0.0, 0.0);
+		//out.test_u32 = u32(0);
 	}
 	
 	out.size = rect_px_size * 0.5;
@@ -184,22 +188,29 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 	let tex_pos_grad = fwidth(in.texture_position);
 
 	var mask = 1.0;
-	var border_mask = 0.0;
+	var border_mask = 1.0;
 	if(element_type == u32(0)){
 		let box_dst = -(sd_rounded_box(in.vert_px_position, in.size, in.border_radius) - 0.5);
 		border_mask = clamp(box_dst - f32(in.data_vector_1.z), 0.0, 1.0);
 		mask = clamp(box_dst, 0.0, 1.0);
 	}
 	else if(element_type == u32(1)){
-		let grad = length(tex_pos_grad * in.size);
-		let tx_pos_index = in.data_vector_0.w - u32(1);
+		let grad = length(tex_pos_grad * vec2<f32>(100.0,100.0));
+		let tx_pos_index = in.data_vector_0.y - u32(1);
+		
 		let tx_pos_data = texture_position.data[tx_pos_index];
-		let texel_size = 1.0 / 1024.0;
-		let sampled_pixel = textureSampleLevel(texture_atlas, texture_atlas_sampler, in.texture_position, i32(tx_pos_data.w), 0.0, vec2<i32>(0, 0));
-		let pixle_dist = (sampled_pixel.x * 4.0) / grad;
-		//mask = clamp(0.5 - pixle_dist, 0.0, 1.0);
-		let ss = smoothStep(0.0, 0.1, sampled_pixel.x);
-		mask = 1.0 - ss;
+		let tx_slice = tx_pos_data.w >> u32(4);
+		let sample_component = tx_pos_data.w & u32(0x0000000f);
+		
+		let sampled_pixel = textureSampleLevel(texture_atlas, texture_atlas_sampler, in.texture_position, i32(tx_slice), 0.0, vec2<i32>(0, 0));
+		var sample = 0.0;
+
+		sample = sampled_pixel[sample_component];
+
+		let pixle_dist = (sample * 0.75) / grad;
+		mask = clamp(0.5 - pixle_dist, 0.0, 1.0);
+		//let ss = smoothStep(0.0, 0.1, sample);
+		//mask = 1.0 - ss;
 	}
 
 	// let inside_mask = in.mask.x <= in.vert_position.x && in.mask.y <= in.vert_position.y && in.mask.z >= in.vert_position.x && in.mask.w >= in.vert_position.y;

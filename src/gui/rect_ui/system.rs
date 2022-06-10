@@ -23,7 +23,7 @@ impl GUIRects {
         render_texture_slotmap: &mut RenderTextureSlotmap
     ) -> Self {
         let texture_atlas = TextureAtlas::new(render_system, 1024, 1024, 2);
-        let rect_collection = RectCollection::new(1024, render_system);
+        let rect_collection = RectCollection::new(126, render_system);
         let render_pass_data = GUIRenderPassData::new(render_system);
 
         let rect_material = RectMaterial::new(

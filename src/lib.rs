@@ -82,12 +82,11 @@ pub fn render<R: 'static + Runtime>(
         .submit(command_buffers);
     output.present();
     
-    let start_block = std::time::Instant::now();
+    //let render_time = std::time::Instant::now();
     let on_gpu_done = engine.render_system.render_window.queue.on_submitted_work_done();
     engine.render_system.render_window.device.poll(wgpu::Maintain::Wait);
     pollster::block_on(on_gpu_done);
-    let finish_block = std::time::Instant::now();
-    println!("Time taken in microseconds {}", (finish_block - start_block).as_micros());
+    //println!("Time taken in microseconds {}", (render_time.elapsed()).as_micros());
 
     Ok(())
 }
