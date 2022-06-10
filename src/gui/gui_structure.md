@@ -34,7 +34,7 @@ All the blocks are going to be rendered with all the faces facing the same direc
 
 ### Data Structure
 
-- LOC 0 || **vec4\<f32\>**
+- LOC 0 || **vec4\<u32\>**
 	- (X , Y) Position
 	- (Z , W) Size
 - LOC 1 || **vec4\<u32\>**

@@ -155,12 +155,16 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 	let texture_mask: u32 = in.data_vector_1.w >> u32(8);
 
 	var mask = 1.0;
+	var border_mask = 0.0;
 	if(element_type == u32(0)){
 		let box_dst = -(sd_rounded_box(in.vert_px_position, in.size, in.border_radius) - 0.5);
+		border_mask = clamp(box_dst - f32(in.data_vector_1.z), 0.0, 1.0);
 		mask = clamp(box_dst, 0.0, 1.0);
 	}
 
-	out.main_color = vec4<f32>(in.color.x, in.color.y, in.color.z, in.color.w * mask);
+	let main_color = mix(vec4<f32>(1.0,0.0,0.0,1.0), in.color, border_mask);
+	
+	out.main_color = vec4<f32>(main_color.x, main_color.y, main_color.z, main_color.w * mask);
 	
 	var ui_mask = u32(0);
 	if(step(0.1, mask) > 0.5){

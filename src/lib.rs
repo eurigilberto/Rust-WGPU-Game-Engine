@@ -7,7 +7,6 @@ pub mod render_system;
 
 pub use bytemuck;
 use glam::{uvec2, UVec2};
-use render_system::RenderSystem;
 pub use wgpu;
 pub use winit;
 pub use half;
@@ -82,9 +81,14 @@ pub fn render<R: 'static + Runtime>(
         .queue
         .submit(command_buffers);
     output.present();
-    //let on_gpu_done = engine.render_system.render_window.queue.on_submitted_work_done();
-    //engine.render_system.render_window.device.poll(wgpu::Maintain::Poll);
-    //pollster::block_on(on_gpu_done);
+    
+    let start_block = std::time::Instant::now();
+    let on_gpu_done = engine.render_system.render_window.queue.on_submitted_work_done();
+    engine.render_system.render_window.device.poll(wgpu::Maintain::Wait);
+    pollster::block_on(on_gpu_done);
+    let finish_block = std::time::Instant::now();
+    println!("Time taken in microseconds {}", (finish_block - start_block).as_micros());
+
     Ok(())
 }
 
@@ -189,7 +193,7 @@ pub fn start_engine_loop<R: 'static + Runtime>(
                         Err(wgpu::SurfaceError::Lost) => engine.render_system.configure_surface(),
                         // The system is out of memory, we should probably quit
                         Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-                        // ///
+                        //
                         Err(wgpu::SurfaceError::Outdated) => {
                             println!("Outdated Surface!");
                             engine.render_system.configure_surface()
