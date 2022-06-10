@@ -40,14 +40,16 @@ var texture_atlas_sampler: sampler;
 struct VertexOutput {
 	[[location(0)]] vert_position: vec2<f32>;
 	[[location(1)]] vert_px_position: vec2<f32>;
+	[[location(2)]] texture_position: vec2<f32>;
 	
 	//Instance data
-	[[location(2)]] size: vec2<f32>;
-	[[location(3)]] color: vec4<f32>;
-	[[location(4)]] mask: vec4<f32>;
-	[[location(5)]] border_radius: vec4<f32>;
+	[[location(3)]] size: vec2<f32>;
+	[[location(4)]] color: vec4<f32>;
+	[[location(5)]] mask: vec4<f32>;
+	[[location(6)]] border_radius: vec4<f32>;
 
-	[[location(6)]] data_vector_1: vec4<u32>;
+	[[location(7)]] data_vector_0: vec4<u32>;
+	[[location(8)]] data_vector_1: vec4<u32>;
 
 	//Required built in
     [[builtin(position)]] clip_position: vec4<f32>;
@@ -72,6 +74,18 @@ fn vs_main(
 		vec2<f32>(-1.0, -1.0)
 	);
 
+	// 2 ---- 1
+	// |\     |
+	// | ---  |
+	// |    \ |
+	// 4 ---- 3 
+	var tx_size_offset_mult = array<vec2<f32>,4>(
+		vec2<f32>(1.0, 0.0),
+		vec2<f32>(0.0, 0.0),
+		vec2<f32>(1.0, 1.0),
+		vec2<f32>(0.0, 1.0)
+	);
+
 	let screen_width_height: vec2<f32> = vec2<f32>(gui_render_pass_data.screen_size.x, gui_render_pass_data.screen_size.y);
 
 	let rect_px_position = vec2<f32>(f32(position_size.x), f32(position_size.y));
@@ -89,6 +103,23 @@ fn vs_main(
 
     out.clip_position = vec4<f32>(vertex_position.x, vertex_position.y, 0.0, 1.0);
 	out.vert_position = vertex_position;
+
+	if(data_vector_0.y > u32(0)){
+		let tx_pos_index = data_vector_0.y - u32(1);
+		let tx_pos_data = texture_position.data[tx_pos_index];
+
+		let tx_pos_start = vec2<f32>(f32(tx_pos_data.x), f32(tx_pos_data.y));
+		let size_pack:u32 = tx_pos_data.z;
+		let tx_width = size_pack >> u32(16);
+		let tx_height = size_pack & u32(0x0000ffff);
+		let tx_size = vec2<f32>(f32(tx_width), f32(tx_height));
+
+		let tx_size_offset = tx_size_offset_mult[in_vertex_index] * tx_size;
+
+		out.texture_position = (tx_pos_start + tx_size_offset) / vec2<f32>(1024.0, 1024.0);
+	}else{
+		out.texture_position = vec2<f32>(0.0, 0.0);
+	}
 	
 	out.size = rect_px_size * 0.5;
 	out.vert_px_position = vertex_position_offset * out.size;
@@ -115,6 +146,7 @@ fn vs_main(
 		out.border_radius = vec4<f32>(0.0,0.0,0.0,0.0);
 	}
 
+	out.data_vector_0 = data_vector_0;
 	out.data_vector_1 = data_vector_1;
 
 	return out;
@@ -145,14 +177,11 @@ struct FragmentOutput {
 [[stage(fragment)]]
 fn fs_main(in: VertexOutput) -> FragmentOutput {
 	var out: FragmentOutput;
-	
-	let inside_mask = in.mask.x <= in.vert_position.x && in.mask.y <= in.vert_position.y && in.mask.z >= in.vert_position.x && in.mask.w >= in.vert_position.y;
-	if(!inside_mask){
-		discard;
-	}
 
 	let element_type: u32 = in.data_vector_1.w & u32(0x000000ff);
 	let texture_mask: u32 = in.data_vector_1.w >> u32(8);
+
+	let tex_pos_grad = fwidth(in.texture_position);
 
 	var mask = 1.0;
 	var border_mask = 0.0;
@@ -161,6 +190,22 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 		border_mask = clamp(box_dst - f32(in.data_vector_1.z), 0.0, 1.0);
 		mask = clamp(box_dst, 0.0, 1.0);
 	}
+	else if(element_type == u32(1)){
+		let grad = length(tex_pos_grad * in.size);
+		let tx_pos_index = in.data_vector_0.w - u32(1);
+		let tx_pos_data = texture_position.data[tx_pos_index];
+		let texel_size = 1.0 / 1024.0;
+		let sampled_pixel = textureSampleLevel(texture_atlas, texture_atlas_sampler, in.texture_position, i32(tx_pos_data.w), 0.0, vec2<i32>(0, 0));
+		let pixle_dist = (sampled_pixel.x * 4.0) / grad;
+		//mask = clamp(0.5 - pixle_dist, 0.0, 1.0);
+		let ss = smoothStep(0.0, 0.1, sampled_pixel.x);
+		mask = 1.0 - ss;
+	}
+
+	// let inside_mask = in.mask.x <= in.vert_position.x && in.mask.y <= in.vert_position.y && in.mask.z >= in.vert_position.x && in.mask.w >= in.vert_position.y;
+	// if(!inside_mask){
+	// 	discard;
+	// }
 
 	let main_color = mix(vec4<f32>(1.0,0.0,0.0,1.0), in.color, border_mask);
 	

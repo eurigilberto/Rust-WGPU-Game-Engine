@@ -57,48 +57,52 @@ fn parse_font_from_bytes(font_bytes: &[u8], scale: f32) -> fontdue::FontResult<f
     )
 }
 
-pub enum FontCharLimit{
+pub enum FontCharLimit {
     All,
-    LimitedCount(usize)
+    LimitedCount(usize),
+}
+
+macro_rules! print_time {
+    ( $x:expr , $msg: expr ) => {{
+        let time = std::time::Instant::now();
+        let res = $x;
+        println!(
+            "{} - elapsed time {} millis",
+            $msg,
+            time.elapsed().as_millis()
+        );
+        res
+    }};
 }
 
 impl FontAtlas {
-    pub fn new(file_data: &[u8], reqested_size: UVec2, character_size: f32, font_char_limit: FontCharLimit) -> Result<Self, FontCreationError> {
+    pub fn new(
+        file_data: &[u8],
+        reqested_size: UVec2,
+        character_size: f32,
+        font_char_limit: FontCharLimit,
+    ) -> Result<Self, FontCreationError> {
         // Read the font data. std::fs::read(file_path)
         match parse_font_from_bytes(file_data, character_size) {
             Ok(font) => {
-                let start = std::time::Instant::now();
-                let mut slice_coords = create_character_slices(&font, character_size, 8, font_char_limit);
-                let end = std::time::Instant::now();
-                println!(
-                    "Character slice generated - elapsed time {} millis",
-                    (end - start).as_millis()
+                let mut slice_coords = print_time!(
+                    create_character_slices(&font, character_size, 8, font_char_limit),
+                    "Character slice generated"
                 );
-
-                let start = std::time::Instant::now();
-                let bitmaps = create_character_bitmaps(&font, &slice_coords, character_size, 8);
-                let end = std::time::Instant::now();
-                println!(
-                    "Character bitmap generated - elapsed time {} millis",
-                    (end - start).as_millis()
+                let bitmaps = print_time!(
+                    create_character_bitmaps(&font, &slice_coords, character_size, 8),
+                    "Character bitmap generated"
                 );
-
-                let start = std::time::Instant::now();
-                let bitmaps_sdf_half = generate_sdf_bitmaps(&bitmaps, 8);
-                let end = std::time::Instant::now();
-                println!(
-                    "Character sdf generated - elapsed time {} millis",
-                    (end - start).as_millis()
+                let bitmaps_sdf_half = print_time!(
+                    generate_sdf_bitmaps(&bitmaps, 8),
+                    "Character sdf bitmaps generated"
                 );
-
-                let start = std::time::Instant::now();
-                match create_font_sdf_texture(&mut slice_coords, &bitmaps_sdf_half, reqested_size) {
+                let res_font_sdf_texture = print_time!(
+                    create_font_sdf_texture(&mut slice_coords, &bitmaps_sdf_half, reqested_size),
+                    "Font sdf texture"
+                );
+                match res_font_sdf_texture {
                     Ok(font_sdf_texture) => {
-                        let end = std::time::Instant::now();
-                        println!(
-                            "Character sdf texture atlas generated - elapsed time {} millis",
-                            (end - start).as_millis()
-                        );
                         return Ok(Self {
                             font_glyphs: slice_coords,
                             font_sdf_texture: font_sdf_texture,
@@ -118,21 +122,19 @@ fn create_character_slices(
     font: &fontdue::Font,
     character_size: f32,
     buffer_size: usize,
-    font_char_limit: FontCharLimit
+    font_char_limit: FontCharLimit,
 ) -> Vec<FontTextureSlice> {
     let mut char_array: Vec<char> = font.chars().keys().into_iter().map(|key| *key).collect();
     char_array.sort();
     let selected_chars = match font_char_limit {
-        FontCharLimit::All => {
-            char_array.clone()
-        },
+        FontCharLimit::All => char_array.clone(),
         FontCharLimit::LimitedCount(count) => {
             let mut s_char = Vec::<char>::with_capacity(count);
             for index in 0..count {
                 s_char.push(char_array[index]);
             }
             s_char
-        },
+        }
     };
 
     let character_count = selected_chars.len();
@@ -241,7 +243,7 @@ fn create_font_sdf_texture(
         let fits_vertically = (cursor.y + slice.get_padded_height()) < reqested_size.y;
         if !fits_vertically {
             println!("Cursor: {:?}", cursor);
-            return Err(FontCreationError::NotEnoughSpaceOnTexture)
+            return Err(FontCreationError::NotEnoughSpaceOnTexture);
         }
 
         let sdf_bitmap = &sdf_bitmaps[index];
@@ -252,7 +254,10 @@ fn create_font_sdf_texture(
         assert_eq!(char_sdf_size, expected_sdf_size, "SDF has incorrect size");
 
         let start_position = cursor.clone();
-        let end_position = uvec2(cursor.x + slice.get_padded_width(), cursor.y + slice.get_padded_height());
+        let end_position = uvec2(
+            cursor.x + slice.get_padded_width(),
+            cursor.y + slice.get_padded_height(),
+        );
 
         for v_index in 0..slice.get_padded_height() {
             let line_range = (v_index * slice.get_padded_width()) as usize
@@ -264,8 +269,15 @@ fn create_font_sdf_texture(
                 let tex_v_coord = cursor.y + v_index;
 
                 let pixel_position = uvec2(tex_h_coord, tex_v_coord);
-                let inside_expected_region = start_position.x <= pixel_position.x && start_position.y <= pixel_position.y && end_position.x >= pixel_position.x && end_position.y >= pixel_position.y;
-                assert!(inside_expected_region, "Not inside expected region {:?}", pixel_position);
+                let inside_expected_region = start_position.x <= pixel_position.x
+                    && start_position.y <= pixel_position.y
+                    && end_position.x >= pixel_position.x
+                    && end_position.y >= pixel_position.y;
+                assert!(
+                    inside_expected_region,
+                    "Not inside expected region {:?}",
+                    pixel_position
+                );
 
                 let tex_index = (tex_h_coord + tex_v_coord * reqested_size.x) as usize;
 
