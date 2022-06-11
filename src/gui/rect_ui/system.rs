@@ -15,6 +15,12 @@ pub struct GUIRects {
     pub render_texture: GUIRenderTexture,
 }
 
+pub enum ElementType {
+    RoundRect = 0,
+    SDFFont = 1,
+    Circle = 2
+}
+
 impl GUIRects {
     pub fn new(
         render_system: &RenderSystem,

@@ -167,6 +167,7 @@ fn vs_main(
 	return out;
 }
 
+// Taken from https://www.shadertoy.com/view/4llXD7 by Inigo Quilez
 fn sd_rounded_box(p: vec2<f32>, b: vec2<f32>, r: vec4<f32>) -> f32{
 	var round = r.zw;
 	
@@ -200,6 +201,12 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 
 	var mask = 1.0;
 	var border_mask = 1.0;
+	
+	let inside_mask = in.mask.x <= in.vert_position.x && in.mask.y <= in.vert_position.y && in.mask.z >= in.vert_position.x && in.mask.w >= in.vert_position.y;
+	if(!inside_mask){
+	 	discard;
+	}
+
 	if(element_type == u32(0)){
 		let box_dst = -(sd_rounded_box(in.vert_px_position, in.size, in.border_radius) - 0.5);
 		border_mask = clamp(box_dst - f32(in.data_vector_1.z), 0.0, 1.0);
@@ -221,21 +228,36 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 		let pixel_dist = (sample * 0.75) / grad;
 		mask = clamp(0.5 - pixel_dist, 0.0, 1.0);
 
+		// I am not sure what is going to be the best way of anti aliasing the text.
+		// Maybe do 4 samples around the point to smooth the resulting value a little bit more
+
 		//let ss = smoothStep(0.0, 0.1, sample);
 		//mask = 1.0 - ss;
 		
 		//let boder_dist = ((sample + 0.1) * 0.75) / grad;
 		//border_mask = clamp(0.5 - boder_dist, 0.0, 1.0);
 	}
-
-	let inside_mask = in.mask.x <= in.vert_position.x && in.mask.y <= in.vert_position.y && in.mask.z >= in.vert_position.x && in.mask.w >= in.vert_position.y;
-	if(!inside_mask){
-	 	discard;
+	else if(element_type == u32(2)){
+		let distance_to_point = length(in.vert_px_position);
+		var radius = 0.0;
+		if(in.size.y < in.size.x) {
+			let radius_interpolator = abs(in.vert_px_position.y / in.size.y);
+			let corrected_lerp = radius_interpolator * radius_interpolator;
+			radius = mix(in.size.x, in.size.y, corrected_lerp);
+		}else{
+			let radius_interpolator = abs(in.vert_px_position.x / in.size.x);
+			let corrected_lerp = radius_interpolator * radius_interpolator;
+			radius = mix(in.size.y, in.size.x, corrected_lerp);
+		}
+		mask = clamp(-(distance_to_point - radius - 0.5), 0.0, 1.0);
 	}
 
 	let main_color = mix(vec4<f32>(1.0,0.0,0.0,1.0), in.color, border_mask);
-	
 	out.main_color = vec4<f32>(main_color.x, main_color.y, main_color.z, main_color.w * mask);
+
+	// Background debugging, just in case something does not make sense
+	//let main_color_w_bg = mix(vec4<f32>(1.0,0.0,0.0,1.0), main_color, main_color.w * mask);
+	//out.main_color = main_color_w_bg;
 	
 	var ui_mask = u32(0);
 	if(step(0.1, mask) > 0.5){
