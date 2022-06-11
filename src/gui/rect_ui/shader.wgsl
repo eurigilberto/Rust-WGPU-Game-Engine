@@ -94,14 +94,25 @@ fn vs_main(
 	let rect_px_size = vec2<f32>(f32(position_size.z), f32(position_size.w));
 
 	let rect_position = (rect_px_position / screen_width_height) * 2.0;
-	let rect_size = rect_px_size / screen_width_height;
+	
+	//let norm_rect_size = rect_px_size / screen_width_height;
 
 	let screen_origin_position: vec2<f32> = vec2<f32>(-1.0,-1.0); //in clip space
 
-	let vertex_position_offset: vec2<f32> = offset_list[in_vertex_index];
-	let position_offset: vec2<f32> = (vertex_position_offset * rect_size);
+	let vert_offset = f32(data_vector_1.y) / 8190.0;
 
-	let vertex_position: vec2<f32> = screen_origin_position + rect_position + position_offset;
+	let vertex_position_offset: vec2<f32> = offset_list[in_vertex_index];
+	let position_offset: vec2<f32> = (vertex_position_offset * rect_px_size);
+
+	let cos_rot = cos(vert_offset);
+	let sin_rot = sin(vert_offset);
+	let rotation_mat = mat2x2<f32>(cos_rot, -sin_rot, sin_rot, cos_rot);
+
+	let rotated_position_offset = rotation_mat * position_offset;
+
+	let norm_position_offset = rotated_position_offset / screen_width_height;
+
+	let vertex_position: vec2<f32> = screen_origin_position + rect_position + norm_position_offset;
 
     out.clip_position = vec4<f32>(vertex_position.x, vertex_position.y, 0.0, 1.0);
 	out.vert_position = vertex_position;
@@ -195,7 +206,7 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 		mask = clamp(box_dst, 0.0, 1.0);
 	}
 	else if(element_type == u32(1)){
-		let grad = length(tex_pos_grad * vec2<f32>(100.0,100.0));
+		let grad = length(tex_pos_grad) * 100.0;
 		let tx_pos_index = in.data_vector_0.y - u32(1);
 		
 		let tx_pos_data = texture_position.data[tx_pos_index];
@@ -207,16 +218,20 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 
 		sample = sampled_pixel[sample_component];
 
-		let pixle_dist = (sample * 0.75) / grad;
-		mask = clamp(0.5 - pixle_dist, 0.0, 1.0);
+		let pixel_dist = (sample * 0.75) / grad;
+		mask = clamp(0.5 - pixel_dist, 0.0, 1.0);
+
 		//let ss = smoothStep(0.0, 0.1, sample);
 		//mask = 1.0 - ss;
+		
+		//let boder_dist = ((sample + 0.1) * 0.75) / grad;
+		//border_mask = clamp(0.5 - boder_dist, 0.0, 1.0);
 	}
 
-	// let inside_mask = in.mask.x <= in.vert_position.x && in.mask.y <= in.vert_position.y && in.mask.z >= in.vert_position.x && in.mask.w >= in.vert_position.y;
-	// if(!inside_mask){
-	// 	discard;
-	// }
+	let inside_mask = in.mask.x <= in.vert_position.x && in.mask.y <= in.vert_position.y && in.mask.z >= in.vert_position.x && in.mask.w >= in.vert_position.y;
+	if(!inside_mask){
+	 	discard;
+	}
 
 	let main_color = mix(vec4<f32>(1.0,0.0,0.0,1.0), in.color, border_mask);
 	

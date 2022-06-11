@@ -1,6 +1,6 @@
 pub use glam;
 pub mod color;
-mod engine_time;
+pub mod engine_time;
 pub mod font;
 pub mod gui;
 pub mod render_system;
