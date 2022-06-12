@@ -1,5 +1,5 @@
 use crate::EngineEvent;
-use glam::{vec2, Vec2};
+use glam::{vec2, Vec2, UVec2};
 
 use super::system::GUIRects;
 
@@ -19,7 +19,11 @@ pub enum UIEvent<'a> {
     MouseWheel(UIEventData<Vec2>),
     KeyboardInput(UIEventData<KeyboardInput>),
 	Update,
-    Render(&'a mut GUIRects),
+    Render{
+        gui_rects: &'a mut GUIRects,
+        container_size: UVec2,
+        container_position: UVec2
+    },
 }
 
 pub struct UIEventData<T> {
@@ -48,7 +52,7 @@ pub enum GUIState {
     Inactive,
 }
 
-pub fn default_event_transformation(event: &EngineEvent) -> Option<UIEvent> {
+pub fn default_event_transformation(event: &EngineEvent, size: UVec2) -> Option<UIEvent> {
     match event {
         EngineEvent::WinitEvent(event) => match event {
             winit::event::WindowEvent::KeyboardInput { input, .. } => {
@@ -64,7 +68,7 @@ pub fn default_event_transformation(event: &EngineEvent) -> Option<UIEvent> {
             }
             //winit::event::WindowEvent::ModifiersChanged(_) => todo!(),
             winit::event::WindowEvent::CursorMoved { position, .. } => Some(UIEvent::MouseMove(
-                UIEventData::<Vec2>::new(vec2(position.x as f32, position.y as f32)),
+                UIEventData::<Vec2>::new(vec2(position.x as f32, size.y as f32 - position.y as f32)),
             )),
             winit::event::WindowEvent::MouseWheel { delta, .. } => {
                 let d = match delta {
@@ -73,7 +77,7 @@ pub fn default_event_transformation(event: &EngineEvent) -> Option<UIEvent> {
                         vec2(pos.x as f32, pos.y as f32)
                     }
                 };
-                Some(UIEvent::MouseMove(UIEventData::<Vec2>::new(d)))
+                Some(UIEvent::MouseWheel(UIEventData::<Vec2>::new(d)))
             }
             winit::event::WindowEvent::MouseInput { state, button, .. } => Some(
                 UIEvent::MouseButton(UIEventData::<MouseInput>::new(MouseInput {

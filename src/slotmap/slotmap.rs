@@ -73,7 +73,7 @@ impl<V> Slotmap<V> {
         self.values.iter_mut()
     }
 
-    pub fn get_value(&self, key: SlotKey) -> Option<&V> {
+    pub fn get_value(&self, key: &SlotKey) -> Option<&V> {
         if self.is_valid(&key) {
             Some(&self.values[self.slots[key.index].index])
         } else {
@@ -81,7 +81,7 @@ impl<V> Slotmap<V> {
         }
     }
 
-    pub fn get_value_mut(&mut self, key: SlotKey) -> Option<&mut V> {
+    pub fn get_value_mut(&mut self, key: &SlotKey) -> Option<&mut V> {
         if self.is_valid(&key) {
             Some(&mut self.values[self.slots[key.index].index])
         } else {

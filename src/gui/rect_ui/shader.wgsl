@@ -94,8 +94,6 @@ fn vs_main(
 	let rect_px_size = vec2<f32>(f32(position_size.z), f32(position_size.w));
 
 	let rect_position = (rect_px_position / screen_width_height) * 2.0;
-	
-	//let norm_rect_size = rect_px_size / screen_width_height;
 
 	let screen_origin_position: vec2<f32> = vec2<f32>(-1.0,-1.0); //in clip space
 
@@ -130,10 +128,8 @@ fn vs_main(
 		let tx_size_offset = tx_size_offset_mult[in_vertex_index] * tx_size;
 
 		out.texture_position = (tx_pos_start + tx_size_offset) / vec2<f32>(1024.0, 1024.0);
-		//out.test_u32 = tx_pos_data.w & u32(0x0000000f);
 	}else{
 		out.texture_position = vec2<f32>(0.0, 0.0);
-		//out.test_u32 = u32(0);
 	}
 	
 	out.size = rect_px_size * 0.5;

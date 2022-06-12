@@ -57,7 +57,7 @@ mod tests {
                     2,
                     "Free List does not have the correct lenght"
                 );
-                match u32_slotmap.get_value(slot_keys[0]) {
+                match u32_slotmap.get_value(&slot_keys[0]) {
                     Some(_) => {
                         panic!("Removing a value should make the key invalid")
                     }
