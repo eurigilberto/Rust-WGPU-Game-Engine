@@ -26,6 +26,12 @@ impl <T: bytemuck::Pod> CPUGPUBuffer<T>{
     pub fn clear_buffer(&mut self){
         self.cpu_vector.clear();
     }
+
+    pub fn push_cpu(&mut self, data: T)->usize{
+        let index = self.cpu_vector.len();
+        self.cpu_vector.push(data);
+        index
+    }
 }
 
 pub fn get_buffer_usage_from_buffer_type(buffer_type: &GrowableBufferType) -> wgpu::BufferUsages {

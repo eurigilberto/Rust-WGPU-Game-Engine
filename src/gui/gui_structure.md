@@ -48,6 +48,25 @@ All the blocks are going to be rendered with all the faces facing the same direc
 	- Z - Border Size
 	- W - Texture Mask Value 24 MSB | Element Type 8 LSB
 
+
+### New Data Structure
+I am not expecting more than ~64k to be managed by a single GUI System, so I am capping all indexes to u16 values
+
+- LOC 0 || **vec4\<u32\>**
+	- (X , Y) Position
+	- (Z , W) Size
+- LOC 1 || **vec4\<u32\>**
+	- X - Element Mask Type 8bits | Element Coloring Type 8bits | Rect Mask Value 16bits
+	- Y - Mask data index 16bits | coloring data index 16bits
+	- Z - border color index 16bits | border size 16bits
+	- W - empty
+
+- LOC 2 || **vec4\<f32\>**
+	- X - Rotation
+	- Y - empty
+	- Z - empty
+	- W - empty
+
 ## Extra storage buffers
 
 This are meant to store data that is not going to be 

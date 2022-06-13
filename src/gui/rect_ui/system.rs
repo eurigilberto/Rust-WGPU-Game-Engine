@@ -1,7 +1,10 @@
 use glam::{vec2, UVec2};
 use wgpu::Color;
 
-use crate::{render_system::{RenderSystem, texture}, RenderTextureSlotmap};
+use crate::{
+    render_system::{RenderSystem},
+    RenderTextureSlotmap, color::RGBA,
+};
 
 use super::{
     collection::RectCollection, graphic::RectGraphic, material::RectMaterial,
@@ -11,41 +14,37 @@ use super::{
 pub struct GUIRects {
     pub rect_material: RectMaterial,
     pub render_pass_data: GUIRenderPassData,
+    /// Althoguh it is a public value, it is not meant to be used directly - use element builder instead
     pub rect_collection: RectCollection,
     pub texture_atlas: TextureAtlas,
     pub render_texture: GUIRenderTexture,
 }
 
-pub enum ElementType {
-    RoundRect = 0,
-    SDFFont = 1,
-    Circle = 2,
-}
-
 pub enum ExtraBufferData<T> {
     NewData(T),
-    PrevIndex(usize),
-    None,
+    PrevIndex(u16),
 }
 
+#[derive(Clone, Copy)]
 pub struct BorderRadius {
-    top_right: f32,
-    bottom_right: f32,
-    top_left: f32,
-    bottom_left: f32,
+    pub top_right: f32,
+    pub bottom_right: f32,
+    pub top_left: f32,
+    pub bottom_left: f32,
 }
 
-impl BorderRadius {
-    pub fn get_data(&self) -> [f32; 4] {
+impl Into<[f32;4]> for BorderRadius{
+    fn into(self) -> [f32;4] {
         [
             self.top_right,
             self.bottom_right,
             self.top_left,
-            self.bottom_left,
+            self.bottom_left
         ]
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct RectMask {
     pub position: UVec2,
     pub size: UVec2,
@@ -61,28 +60,6 @@ impl RectMask {
 
         [bottom_left.x, bottom_left.y, top_right.x, top_right.y]
     }
-}
-
-/*
-	- **vec4\<u32\>** 
-		- **x , y** top left corner position of the `texture slice`.
-		- **z** a packed u32 that holds the `size` of the `texture slice`.
-		- **w** the texture array selection and the component selection 4 LSB.
- */
-
-pub enum SampleComponentSelection{
-    X = 0,
-    Y = 1,
-    Z = 2,
-    W = 3,
-    FullColor = 4
-}
-
-pub struct TexturePosition{
-    pub position: UVec2,
-    pub size: UVec2,
-    pub texture_array_selection: u32,
-    pub component_selection: SampleComponentSelection
 }
 
 impl GUIRects {
@@ -121,31 +98,5 @@ impl GUIRects {
 
     pub fn resize(&mut self, new_size: UVec2, render_system: &RenderSystem) {
         self.render_pass_data.resize(new_size, render_system);
-    }
-
-    pub fn push_round_rect(
-        &mut self,
-        color: ExtraBufferData<Color>,
-        border_radius: ExtraBufferData<BorderRadius>,
-        rect_mask: ExtraBufferData<RectMask>,
-        texture_position: ExtraBufferData<TexturePosition>
-    ) -> bool {
-        self.rect_collection
-            .color
-            .cpu_vector
-            .push([0.5, 0.5, 0.5, 1.0]);
-        self.rect_collection
-            .rect_mask
-            .cpu_vector
-            .push([10.0, 20.0, 30.0, 40.0]);
-        self.rect_collection
-            .texture_position
-            .cpu_vector
-            .push([1, 2, 3, 4]);
-        self.rect_collection
-            .border_radius
-            .cpu_vector
-            .push([11.0, 11.0, 0.0, 11.0]);
-        false
     }
 }

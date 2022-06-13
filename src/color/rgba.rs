@@ -69,6 +69,11 @@ impl RGBA {
         b: 1.0,
         a: 1.0,
     };
+
+    pub fn set_alpha(mut self, alpha: f32)->Self{
+        self.a = alpha;
+        self
+    }
 }
 
 impl From<RGBA> for [f32; 4] {
