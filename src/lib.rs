@@ -14,9 +14,6 @@ pub mod engine;
 pub mod slotmap;
 pub use engine::Engine;
 pub mod entity_component;
-pub use self::entity_component::{
-    EngineDataType, RenderTextureSlotmap,
-};
 pub mod runtime;
 pub use runtime::Runtime;
 

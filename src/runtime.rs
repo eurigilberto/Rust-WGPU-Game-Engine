@@ -1,4 +1,4 @@
-use crate::{Engine, EngineEvent, render_system::RenderSystem};
+use crate::{Engine, EngineEvent};
 
 pub trait Runtime {
     fn handle_event_queue<F>(&mut self, event_queue: &Vec<EngineEvent>, engine: &mut Engine, exit_event_loop: &mut F)

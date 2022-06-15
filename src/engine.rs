@@ -22,7 +22,7 @@ impl Engine {
             .with_inner_size(winit::dpi::LogicalSize::new(width, height))
 			.with_decorations(true)
 			.build(event_loop)
-			.unwrap();
+			.expect("Window could not be created");
 		window.set_title(title);
 		window
 	}

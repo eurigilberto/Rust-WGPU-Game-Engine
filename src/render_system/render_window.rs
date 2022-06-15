@@ -23,7 +23,7 @@ impl RenderWindow {
                 force_fallback_adapter: false,
             })
             .await
-            .unwrap();
+            .expect("Adapter could not be created on Render Window");
             
         let (device, queue) = adapter
             .request_device(
@@ -35,12 +35,12 @@ impl RenderWindow {
                 None, // Trace path
             )
             .await
-            .unwrap();
+            .expect("Device and Queue could not be created");
 
         //println!("size {} {}", size.width, size.height);
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface.get_preferred_format(&adapter).unwrap(),
+            format: surface.get_preferred_format(&adapter).expect("Could not get prefered format"),
             width: size.x,
             height: size.y,
             present_mode: wgpu::PresentMode::Immediate,

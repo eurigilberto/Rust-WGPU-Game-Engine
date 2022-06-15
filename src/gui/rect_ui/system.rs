@@ -1,9 +1,8 @@
 use glam::{vec2, UVec2};
-use wgpu::Color;
 
 use crate::{
-    render_system::{RenderSystem},
-    RenderTextureSlotmap, color::RGBA,
+    render_system::{RenderSystem, render_texture::RenderTexture},
+    slotmap::slotmap::Slotmap,
 };
 
 use super::{
@@ -67,7 +66,7 @@ impl GUIRects {
         render_system: &RenderSystem,
         system_bind_group_layout: &wgpu::BindGroupLayout,
         size: UVec2,
-        render_texture_slotmap: &mut RenderTextureSlotmap,
+        render_texture_slotmap: &mut Slotmap<RenderTexture>,
     ) -> Self {
         let texture_atlas = TextureAtlas::new(render_system, 1024, 1024, 2);
         let rect_collection = RectCollection::new(126, render_system);
@@ -96,7 +95,17 @@ impl GUIRects {
         }
     }
 
-    pub fn resize(&mut self, new_size: UVec2, render_system: &RenderSystem) {
+    pub fn get_color_rt<'a>(&self, rt_slotmap: &'a Slotmap<RenderTexture>)-> &'a RenderTexture{
+        rt_slotmap.get_value(&self.render_texture.color_texture_key).expect("GUI Color Render Texture not found")
+    }
+
+    pub fn resize(&mut self, new_size: UVec2, render_system: &mut RenderSystem, render_texture_slotmap: &mut Slotmap<RenderTexture>) {
+        let color_rt = render_texture_slotmap.get_value_mut(&self.render_texture.color_texture_key).unwrap();
+        color_rt.resize_texture(new_size, render_system);
+
+        let mask_rt = render_texture_slotmap.get_value_mut(&self.render_texture.mask_texture_key).unwrap();
+        mask_rt.resize_texture(new_size, render_system);
+
         self.render_pass_data.resize(new_size, render_system);
     }
 }

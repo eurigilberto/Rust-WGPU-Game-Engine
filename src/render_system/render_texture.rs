@@ -1,7 +1,6 @@
 use crate::{
-    entity_component::{EngineDataKey, EngineDataTypeKey},
     render_system::{texture, RenderSystem},
-    slotmap::slotmap::Slotmap,
+    slotmap::slotmap::{Slotmap, SlotKey},
 };
 use glam::{UVec2, Vec2};
 
@@ -13,8 +12,6 @@ pub struct RenderTexture {
 
     pub texture: wgpu::Texture,
     pub texture_view: wgpu::TextureView,
-
-    pub scale_size_to_surface: Option<Vec2> //if some, then the render texture is meant to be scaled with the surface texture
 }
 
 impl RenderTexture {
@@ -24,9 +21,7 @@ impl RenderTexture {
         render_system: &RenderSystem,
 
         texture_name: &str,
-        texture_view_name: &str,
-
-        scale_size_to_surface: Option<Vec2>
+        texture_view_name: &str
     ) -> Self {
         let texture_descriptor =
             texture::create_render_texture_descriptor(format, size.x, size.y, Some(texture_name));
@@ -49,8 +44,7 @@ impl RenderTexture {
             texture_view,
             size,
             texture_name: String::from(texture_name),
-            texture_view_name: String::from(texture_view_name),
-            scale_size_to_surface
+            texture_view_name: String::from(texture_view_name)
         }
     }
 
@@ -61,18 +55,14 @@ impl RenderTexture {
 
         texture_name: &str,
         texture_view_name: &str,
-        scale_size_to_surface: Option<Vec2>,
 
         render_texture_slotmap: &mut Slotmap<RenderTexture>,
-    ) -> Option<EngineDataKey> {
+    ) -> Option<SlotKey> {
         let render_texture =
-            Self::new(format, size, render_system, texture_name, texture_view_name, scale_size_to_surface);
+            Self::new(format, size, render_system, texture_name, texture_view_name);
         let push_result = render_texture_slotmap.push(render_texture);
         match push_result {
-            Some(slot_key) => Some(EngineDataKey {
-                map_key: EngineDataTypeKey::RenderTexture,
-                key: slot_key,
-            }),
+            Some(slot_key) => Some(slot_key),
             None => None,
         }
     }

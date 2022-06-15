@@ -14,6 +14,7 @@ pub struct KeyboardInput {
 }
 
 pub enum UIEvent<'a> {
+    Resize(UVec2),
     MouseButton(UIEventData<MouseInput>),
     MouseMove(UIEventData<Vec2>),
     MouseWheel(UIEventData<Vec2>),

@@ -1,7 +1,7 @@
-use crate::entity_component::EngineDataKey;
+use crate::slotmap::slotmap::Slotmap;
+use crate::{slotmap::slotmap::SlotKey};
 use crate::render_system::render_texture::RenderTexture;
 use crate::render_system::RenderSystem;
-use crate::RenderTextureSlotmap;
 use glam::{uvec2, vec2};
 
 pub fn get_color_target_states() -> [wgpu::ColorTargetState; 2] {
@@ -20,8 +20,8 @@ pub fn get_color_target_states() -> [wgpu::ColorTargetState; 2] {
 }
 
 pub struct GUIRenderTexture {
-    pub color_texture_key: EngineDataKey,
-    pub mask_texture_key: EngineDataKey,
+    pub color_texture_key: SlotKey,
+    pub mask_texture_key: SlotKey,
 }
 
 impl GUIRenderTexture {
@@ -29,7 +29,7 @@ impl GUIRenderTexture {
         render_system: &RenderSystem,
         width: u32,
         height: u32,
-        render_texture_slotmap: &mut RenderTextureSlotmap,
+        render_texture_slotmap: &mut Slotmap<RenderTexture>,
     ) -> Self {
         let color_texture = RenderTexture::create_and_store(
             wgpu::TextureFormat::Rgba16Float,
@@ -37,7 +37,6 @@ impl GUIRenderTexture {
             render_system,
             "GUI Color Texture",
             "GUI Color Texture View",
-            Some(vec2(1.0,1.0)),
             render_texture_slotmap,
         );
 
@@ -47,7 +46,6 @@ impl GUIRenderTexture {
             render_system,
             "GUI Mask Texture",
             "GUI Mask Texture View",
-            Some(vec2(1.0,1.0)),
             render_texture_slotmap,
         );
 

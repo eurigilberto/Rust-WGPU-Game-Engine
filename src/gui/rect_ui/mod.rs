@@ -7,5 +7,4 @@ pub mod render_textures;
 pub mod system;
 pub mod render_pass;
 pub mod event;
-pub mod slotmap;
 pub mod element;

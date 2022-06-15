@@ -49,14 +49,14 @@ struct VertexOutput {
 	[[location(3)]] coloring_data: vec4<f32>;
 	
 	//Instance data
-	[[location(4)]] half_size: vec2<f32>;
-	[[location(5)]] mask: vec4<f32>;
+	[[location(4), interpolate(flat)]] half_size: vec2<f32>;
+	[[location(5), interpolate(flat)]] mask: vec4<f32>;
 
 	// x - mask type
 	// y - color type
 	// z - border color index
 	// w - border size
-	[[location(6)]] data_vector_0: vec4<u32>;
+	[[location(6), interpolate(flat)]] data_vector_0: vec4<u32>;
 
 	// if mask type requires a texture
 	// x - array index | y - sample component
@@ -64,7 +64,7 @@ struct VertexOutput {
 	// z - array index | w - sample component
 	// if coloring type is gradient
 	// z - color data index
-	[[location(7)]] texture_extra_data: vec4<u32>;
+	[[location(7), interpolate(flat)]] texture_extra_data: vec4<u32>;
 
 	//Required built in
     [[builtin(position)]] clip_position: vec4<f32>;
