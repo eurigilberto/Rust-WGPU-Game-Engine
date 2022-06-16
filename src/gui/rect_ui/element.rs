@@ -4,7 +4,7 @@ use crate::color::RGBA;
 
 use super::{
     graphic::RectGraphic,
-    system::{BorderRadius, ExtraBufferData, GUIRects, RectMask},
+    BorderRadius, ExtraBufferData, GUIRects, RectMask,
 };
 
 pub struct Border {

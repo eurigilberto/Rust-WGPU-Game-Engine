@@ -2,7 +2,7 @@ use glam::{vec4, UVec2};
 
 use crate::render_system::{self, RenderSystem};
 
-use super::system::GUIRects;
+use super::GUIRects;
 
 fn create_render_pass<'a>(
     encoder: &'a mut wgpu::CommandEncoder,

@@ -1,7 +1,7 @@
 use crate::EngineEvent;
 use glam::{vec2, Vec2, UVec2};
 
-use super::system::GUIRects;
+use super::GUIRects;
 
 pub struct MouseInput {
     pub button: winit::event::MouseButton,
