@@ -2,10 +2,7 @@ use glam::{UVec2, Vec2};
 
 use crate::color::RGBA;
 
-use super::{
-    graphic::RectGraphic,
-    BorderRadius, ExtraBufferData, GUIRects, RectMask,
-};
+use super::{graphic::RectGraphic, BorderRadius, ExtraBufferData, GUIRects, RectMask};
 
 pub struct Border {
     size: u32, //?
@@ -39,7 +36,7 @@ pub struct RadialGradient {
     pub colors: [RGBA; 2],
     pub center_position: Vec2,
     pub end_radius: f32,
-    pub start_radius: f32
+    pub start_radius: f32,
 }
 
 pub struct LinearGradient {
@@ -291,6 +288,7 @@ fn add_coloring_type_data(
     }
 }
 
+/// Creates an element and pushes all the 
 pub fn create_new_rect_element(
     gui_rects: &mut GUIRects,
     screen_size: UVec2,
@@ -305,6 +303,7 @@ pub fn create_new_rect_element(
 
     element.position = position;
     element.size = size;
+    element.rotation = rotation;
 
     match rect_mask {
         ExtraBufferData::NewData(rect_mask) => {
@@ -322,6 +321,12 @@ pub fn create_new_rect_element(
     add_mask_type_data(mask_type, &mut element, gui_rects);
     add_coloring_type_data(coloring_type, &mut element, gui_rects);
 
+    push_element_data(gui_rects, &element);
+
+    element
+}
+
+fn push_element_data(gui_rects: &mut GUIRects, element: &Element) {
     gui_rects
         .rect_collection
         .rect_graphic
@@ -340,7 +345,6 @@ pub fn create_new_rect_element(
                 (element.border_color_index as u32) << 16 | (element.border_size as u32),
                 0,
             ],
-            data_vector_1: [rotation, 0.0, 0.0, 0.0],
+            data_vector_1: [element.rotation, 0.0, 0.0, 0.0],
         });
-    element
 }

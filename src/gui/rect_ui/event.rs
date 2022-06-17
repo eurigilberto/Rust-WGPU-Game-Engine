@@ -22,8 +22,6 @@ pub enum UIEvent<'a> {
 	Update,
     Render{
         gui_rects: &'a mut GUIRects,
-        container_size: UVec2,
-        container_position: UVec2
     },
 }
 
