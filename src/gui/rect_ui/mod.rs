@@ -1,21 +1,24 @@
-pub mod cpu_gpu_buffer;
 pub mod collection;
-pub mod graphic;
-pub mod texture_atlas;
-pub mod material;
-pub mod render_textures;
-pub mod render_pass;
-pub mod event;
+pub mod cpu_gpu_buffer;
 pub mod element;
+pub mod event;
+pub mod graphic;
+pub mod material;
+pub mod render_pass;
+pub mod render_textures;
+pub mod texture_atlas;
 
-use glam::{vec2, UVec2};
+use glam::{vec2, UVec2, Vec2};
 
 use crate::{
-    render_system::{RenderSystem, render_texture::RenderTexture},
+    render_system::{render_texture::RenderTexture, RenderSystem},
     slotmap::slotmap::Slotmap,
 };
 
-use self::{material::RectMaterial, render_pass::GUIRenderPassData, collection::RectCollection, texture_atlas::TextureAtlas, render_textures::GUIRenderTexture, graphic::RectGraphic};
+use self::{
+    collection::RectCollection, graphic::RectGraphic, material::RectMaterial,
+    render_pass::GUIRenderPassData, render_textures::GUIRenderTexture, texture_atlas::TextureAtlas,
+};
 
 pub struct GUIRects {
     pub rect_material: RectMaterial,
@@ -26,43 +29,60 @@ pub struct GUIRects {
     pub render_texture: GUIRenderTexture,
 }
 
+#[derive(Copy, Clone)]
 pub enum ExtraBufferData<T> {
     NewData(T),
     PrevIndex(u16),
 }
 
 #[derive(Clone, Copy)]
-pub struct BorderRadius {
-    pub top_right: f32,
-    pub bottom_right: f32,
-    pub top_left: f32,
-    pub bottom_left: f32,
+pub enum BorderRadius {
+    ForAll(f32),
+    ForTopBottom {
+        top: f32,
+        bottom: f32,
+    },
+    ForLeftRight {
+        left: f32,
+        right: f32,
+    },
+    ForCorners {
+        top_right: f32,
+        bottom_right: f32,
+        top_left: f32,
+        bottom_left: f32,
+    },
 }
 
-impl Into<[f32;4]> for BorderRadius{
-    fn into(self) -> [f32;4] {
-        [
-            self.top_right,
-            self.bottom_right,
-            self.top_left,
-            self.bottom_left
-        ]
+impl Into<[f32; 4]> for BorderRadius {
+    fn into(self) -> [f32; 4] {
+        match self {
+            BorderRadius::ForAll(r) => [r, r, r, r],
+            BorderRadius::ForTopBottom { top, bottom } => [top, bottom, top, bottom],
+            BorderRadius::ForLeftRight { left, right } => [right, right, left, left],
+            BorderRadius::ForCorners {
+                top_right,
+                bottom_right,
+                top_left,
+                bottom_left,
+            } => [top_right, bottom_right, top_left, bottom_left],
+        }
     }
 }
 
 #[derive(Clone, Copy)]
 pub struct RectMask {
-    pub position: UVec2,
-    pub size: UVec2,
+    pub position: Vec2,
+    pub size: Vec2,
 }
 
 impl RectMask {
     pub fn transform_to_gpu(&self, screen_size: UVec2) -> [f32; 4] {
         let start_position = vec2(-1.0, -1.0);
         let bottom_left = start_position
-            + (self.position.as_vec2() * 2.0 - self.size.as_vec2()) / screen_size.as_vec2();
+            + (self.position * 2.0 - self.size) / screen_size.as_vec2();
         let top_right = start_position
-            + (self.position.as_vec2() * 2.0 + self.size.as_vec2()) / screen_size.as_vec2();
+            + (self.position * 2.0 + self.size) / screen_size.as_vec2();
 
         [bottom_left.x, bottom_left.y, top_right.x, top_right.y]
     }
@@ -102,15 +122,26 @@ impl GUIRects {
         }
     }
 
-    pub fn get_color_rt<'a>(&self, rt_slotmap: &'a Slotmap<RenderTexture>)-> &'a RenderTexture{
-        rt_slotmap.get_value(&self.render_texture.color_texture_key).expect("GUI Color Render Texture not found")
+    pub fn get_color_rt<'a>(&self, rt_slotmap: &'a Slotmap<RenderTexture>) -> &'a RenderTexture {
+        rt_slotmap
+            .get_value(&self.render_texture.color_texture_key)
+            .expect("GUI Color Render Texture not found")
     }
 
-    pub fn resize(&mut self, new_size: UVec2, render_system: &mut RenderSystem, render_texture_slotmap: &mut Slotmap<RenderTexture>) {
-        let color_rt = render_texture_slotmap.get_value_mut(&self.render_texture.color_texture_key).unwrap();
+    pub fn resize(
+        &mut self,
+        new_size: UVec2,
+        render_system: &RenderSystem,
+        render_texture_slotmap: &mut Slotmap<RenderTexture>,
+    ) {
+        let color_rt = render_texture_slotmap
+            .get_value_mut(&self.render_texture.color_texture_key)
+            .unwrap();
         color_rt.resize_texture(new_size, render_system);
 
-        let mask_rt = render_texture_slotmap.get_value_mut(&self.render_texture.mask_texture_key).unwrap();
+        let mask_rt = render_texture_slotmap
+            .get_value_mut(&self.render_texture.mask_texture_key)
+            .unwrap();
         mask_rt.resize_texture(new_size, render_system);
 
         self.render_pass_data.resize(new_size, render_system);

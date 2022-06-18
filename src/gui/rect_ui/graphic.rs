@@ -2,7 +2,7 @@
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct RectGraphic {
     /// Position (x,y) and Size (z,w) - LOC 1
-    pub position_size: [u32; 4],
+    pub position_size: [f32; 4],
     /// **Data Vector 0** - LOC 1 See gui structure md for more info
     pub data_vector_0: [u32; 4],
 
@@ -23,7 +23,7 @@ impl Default for RectGraphic {
 impl RectGraphic {
     pub fn get_vertex_buffer_layout<'a>() -> wgpu::VertexBufferLayout<'a> {
         const ATTRIBUTES: [wgpu::VertexAttribute; 3] = wgpu::vertex_attr_array![
-            0 => Uint32x4,
+            0 => Float32x4,
             1 => Uint32x4,
             2 => Float32x4
         ];

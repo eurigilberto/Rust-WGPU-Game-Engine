@@ -76,7 +76,7 @@ fn vs_main(
 	[[builtin(instance_index)]] in_instance_index: u32, 
 	
 	//provided in normalized screen space
-	[[location(0)]] position_size: vec4<u32>,
+	[[location(0)]] position_size: vec4<f32>,
 	[[location(1)]] data_vector_0: vec4<u32>,
 	[[location(2)]] data_vector_1: vec4<f32>,
 ) -> VertexOutput {
@@ -92,8 +92,8 @@ fn vs_main(
 	// Computing Vertex position
 	let screen_width_height: vec2<f32> = vec2<f32>(gui_render_pass_data.screen_size.x, gui_render_pass_data.screen_size.y);
 
-	let rect_px_position = vec2<f32>(f32(position_size.x), f32(position_size.y));
-	let rect_px_size = vec2<f32>(f32(position_size.z), f32(position_size.w));
+	let rect_px_position = vec2<f32>(position_size.x, position_size.y);
+	let rect_px_size = vec2<f32>(position_size.z, position_size.w);
 
 	let rect_position = (rect_px_position / screen_width_height) * 2.0;
 

@@ -1,3 +1,4 @@
+use glam::UVec2;
 use winit::{event_loop::EventLoop, window::WindowBuilder};
 
 use crate::{render_system, engine_time};
@@ -68,5 +69,9 @@ impl Engine {
             system_bind_group_layout,
             system_bind_group,
         }
+    }
+
+    pub fn get_screen_size(&self)->UVec2{
+        self.render_system.render_window.size
     }
 }

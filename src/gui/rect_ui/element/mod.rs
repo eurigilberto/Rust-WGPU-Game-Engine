@@ -1,9 +1,12 @@
+pub mod builder;
+
 use glam::{UVec2, Vec2};
 
 use crate::color::RGBA;
 
 use super::{graphic::RectGraphic, BorderRadius, ExtraBufferData, GUIRects, RectMask};
 
+#[derive(Copy, Clone)]
 pub struct Border {
     size: u32, //?
     color: ExtraBufferData<RGBA>,
@@ -69,6 +72,17 @@ pub enum MaskType {
     SDFFont(ExtraBufferData<TextureSlice>),
 }
 
+impl MaskType {
+    pub fn get_border(&self) -> Option<Border> {
+        match self {
+            MaskType::Rect { border } => border.clone(),
+            MaskType::RoundRect { border, .. } => border.clone(),
+            MaskType::Circle { border } => border.clone(),
+            MaskType::TextureMask(_) | MaskType::SDFFont(_) => None,
+        }
+    }
+}
+
 pub enum ColoringType {
     Color(ExtraBufferData<RGBA>),
 
@@ -94,8 +108,8 @@ pub enum ColoringType {
 
 #[derive(Default)]
 pub struct Element {
-    pub position: UVec2,
-    pub size: UVec2,
+    pub position: Vec2,
+    pub size: Vec2,
 
     // data vector 0 - 0 - X
     pub mask_type: u8,
@@ -288,12 +302,12 @@ fn add_coloring_type_data(
     }
 }
 
-/// Creates an element and pushes all the 
+/// Creates an element and pushes all the
 pub fn create_new_rect_element(
     gui_rects: &mut GUIRects,
     screen_size: UVec2,
-    position: UVec2,
-    size: UVec2,
+    position: Vec2,
+    size: Vec2,
     rotation: f32,
     rect_mask: ExtraBufferData<RectMask>,
     mask_type: &MaskType,

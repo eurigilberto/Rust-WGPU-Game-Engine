@@ -77,7 +77,7 @@ impl RenderTexture {
         }
     }
 
-    pub fn resize_texture(&mut self, new_size: UVec2, render_system: &mut RenderSystem) {
+    pub fn resize_texture(&mut self, new_size: UVec2, render_system: &RenderSystem) {
         let texture_descriptor = texture::create_render_texture_descriptor(
             self.format,
             new_size.x,

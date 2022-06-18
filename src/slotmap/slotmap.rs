@@ -5,6 +5,24 @@ use super::{
     slot_index_types::{Generation, SlotIndex, ValueIndex},
 };
 
+#[macro_export]
+macro_rules! create_custom_key {
+    (
+        $struct_name:ident;
+    ) => {
+        #[derive(Clone, Copy)]
+        pub struct $struct_name (pub SlotKey);
+        impl Deref for $struct_name{
+            type Target = SlotKey;
+        
+            fn deref(&self) -> &Self::Target {
+                &self.0
+            }
+        }
+    };
+}
+pub(crate) use create_custom_key;
+
 #[derive(Clone)]
 pub struct Slot {
     index: ValueIndex,

@@ -4,7 +4,7 @@ pub mod engine_time;
 pub mod font;
 pub mod gui;
 pub mod render_system;
-
+pub mod math_utils;
 pub use bytemuck;
 use glam::{uvec2, UVec2};
 pub use wgpu;
@@ -167,6 +167,8 @@ pub fn start_engine_loop<R: 'static + Runtime>(
                     let mut close_app = || {
                         *control_flow = ControlFlow::Exit;
                     };
+
+                    runtime.frame_start(&engine);
 
                     engine
                         .time

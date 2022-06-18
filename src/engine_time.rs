@@ -6,15 +6,17 @@ use std::time::Instant;
 pub struct TimeBufferData {
     pub time: f32,
     pub delta_time: f32,
-    pub time_milis: f32,
+    pub time_millis: f32,
     pub delta_time_milis: f32,
 }
 pub struct EngineTime {
     pub time_data: TimeBufferData,
     pub time_buffer: wgpu::Buffer,
     pub last_render_time: Instant,
-    pub accumulated_time: u128,
+    accumulated_time: u128,
+
     pub time_since_start: u128,
+    /// How many milliseconds should a frame take
     pub frame_time_milis: u128,
 }
 impl EngineTime {
@@ -25,7 +27,7 @@ impl EngineTime {
         let time_data = TimeBufferData {
             time: 0.0,
             delta_time: 0.0,
-            time_milis: 0.0,
+            time_millis: 0.0,
             delta_time_milis: 0.0,
         };
 
@@ -60,10 +62,10 @@ impl EngineTime {
             self.last_render_time = now;
             self.time_since_start += self.accumulated_time;
 
-            self.time_data.time_milis = self.time_since_start as f32;
+            self.time_data.time_millis = self.time_since_start as f32;
             self.time_data.delta_time_milis = self.accumulated_time as f32;
 
-            self.time_data.time = self.time_data.time_milis / 1000.0;
+            self.time_data.time = self.time_data.time_millis / 1000.0;
             self.time_data.delta_time = self.time_data.delta_time_milis / 1000.0;
 
             self.accumulated_time = 0;
