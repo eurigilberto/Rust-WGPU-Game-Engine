@@ -19,7 +19,7 @@ pub use runtime::Runtime;
 
 use winit::{
     event::*,
-    event_loop::{ControlFlow, EventLoop},
+    event_loop::{ControlFlow, EventLoop}, window::{WindowBuilder, Window},
 };
 
 pub fn default_close_event_handler<F>(event: &EngineEvent, exit_event_loop: &mut F) -> bool
@@ -94,6 +94,10 @@ pub enum EngineEvent {
         scale_factor: f64,
         new_inner_size: UVec2,
     },
+    DeviceEvent{
+        device_id: winit::event::DeviceId,
+        event: winit::event::DeviceEvent
+    }
 }
 
 fn is_resize_event(event: &winit::event::WindowEvent) -> bool{
@@ -103,47 +107,59 @@ fn is_resize_event(event: &winit::event::WindowEvent) -> bool{
     return false;
 }
 
-fn push_event(event_queue: &mut Vec<EngineEvent>, event: winit::event::WindowEvent, engine: &mut Engine) {
-    if event_queue.len() == event_queue.capacity() {
-        panic!("Event Queue is full")
-    } else {
-        if is_resize_event(&event) {
-            //Remove any resize event that is currently on the queue
-            let mut found_resize = false;
-            let mut remove_index = 0;
-            for (index, ee) in event_queue.into_iter().enumerate(){
-                if let EngineEvent::ScaleFactorChanged { .. } | EngineEvent::WinitEvent(WindowEvent::Resized(..)) = ee {
-                    remove_index = index;
-                    found_resize = true;
-                    break;
-                }
-            }
-            if found_resize {
-                event_queue.remove(remove_index);
-            }
+pub enum WindowOrDeviceEvent<'a>{
+    Window(winit::event::WindowEvent<'a>),
+    Device(DeviceId, winit::event::DeviceEvent)
+}
+
+fn remove_any_resize_event(event_queue: &mut Vec<EngineEvent>){
+    let mut found_resize = false;
+    let mut remove_index = 0;
+    for (index, ee) in event_queue.into_iter().enumerate(){
+        if let EngineEvent::ScaleFactorChanged { .. } | EngineEvent::WinitEvent(WindowEvent::Resized(..)) = ee {
+            remove_index = index;
+            found_resize = true;
+            break;
         }
-        if let WindowEvent::ScaleFactorChanged {
-            scale_factor,
-            new_inner_size,
-        } = event
-        {
-            event_queue.push(EngineEvent::ScaleFactorChanged {
-                scale_factor: scale_factor,
-                new_inner_size: uvec2(new_inner_size.width, new_inner_size.height),
-            })
-        } else {
-            if let Some(static_event) = event.to_static() {
-                event_queue.push(EngineEvent::WinitEvent(static_event));
-            }
+    }
+    if found_resize {
+        event_queue.remove(remove_index);
+    }
+}
+
+fn push_window_event(event_queue: &mut Vec<EngineEvent>, window_event: winit::event::WindowEvent){
+    if let WindowEvent::ScaleFactorChanged {
+        scale_factor,
+        new_inner_size,
+    } = window_event
+    {
+        event_queue.push(EngineEvent::ScaleFactorChanged {
+            scale_factor: scale_factor,
+            new_inner_size: uvec2(new_inner_size.width, new_inner_size.height),
+        })
+    } else {
+        if let Some(static_event) = window_event.to_static() {
+            event_queue.push(EngineEvent::WinitEvent(static_event));
         }
     }
 }
 
-pub fn create_engine(width: u32, height: u32, title: &str) -> (Engine, EventLoop<()>) {
-    let event_loop = EventLoop::new();
-    let engine = Engine::new(width, height, title, &event_loop);
-
-    (engine, event_loop)
+fn push_event(event_queue: &mut Vec<EngineEvent>, event: WindowOrDeviceEvent) {
+    if event_queue.len() == event_queue.capacity() {
+        panic!("Event Queue is full")
+    } else {
+        match event {
+            WindowOrDeviceEvent::Window(window_event) => {
+                if is_resize_event(&window_event) {
+                    remove_any_resize_event(event_queue);
+                }
+                push_window_event(event_queue, window_event);
+            },
+            WindowOrDeviceEvent::Device(device_id, event) => {
+                event_queue.push(EngineEvent::DeviceEvent { device_id, event });
+            },
+        }
+    }
 }
 
 pub fn start_engine_loop<R: 'static + Runtime>(
@@ -153,14 +169,17 @@ pub fn start_engine_loop<R: 'static + Runtime>(
 ) {
     engine.time.reset();
     let mut first_frame = true;
-    let mut event_queue = Vec::<EngineEvent>::with_capacity(50);
+    let mut event_queue = Vec::<EngineEvent>::with_capacity(100);
     event_loop.run(move |event, _, control_flow| {
         match event {
             Event::LoopDestroyed => {
                 runtime.before_exit(&mut engine);
             }
-            Event::WindowEvent { event, window_id } if window_id == engine.window.id() => {
-                push_event(&mut event_queue, event, &mut engine);
+            Event::WindowEvent { event, window_id } if window_id == runtime.get_window_id() => {
+                push_event(&mut event_queue, WindowOrDeviceEvent::Window(event));
+            }
+            Event::DeviceEvent { device_id, event } => {
+                push_event(&mut event_queue, WindowOrDeviceEvent::Device(device_id, event));
             }
             Event::MainEventsCleared => {
                 if engine.time.update_time() {
@@ -180,7 +199,7 @@ pub fn start_engine_loop<R: 'static + Runtime>(
                     }
                     event_queue.clear();
                     
-                    runtime.update(&engine);
+                    runtime.update(&engine, &mut close_app);
                     let render_result = render(&mut engine, &mut runtime);
                     
                     match render_result {

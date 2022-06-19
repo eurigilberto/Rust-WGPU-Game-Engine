@@ -86,6 +86,12 @@ impl RectMask {
 
         [bottom_left.x, bottom_left.y, top_right.x, top_right.y]
     }
+
+    pub fn inside_rect(&self, mouse_position: Vec2) -> bool{
+        let to_mouse_pos = Vec2::abs(mouse_position - self.position);
+        let half_size = self.size * 0.5;
+        to_mouse_pos.x <= half_size.x && to_mouse_pos.y <= half_size.y
+    }
 }
 
 impl GUIRects {

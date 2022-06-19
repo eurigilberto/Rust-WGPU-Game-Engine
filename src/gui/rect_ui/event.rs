@@ -1,5 +1,5 @@
 use crate::EngineEvent;
-use glam::{vec2, Vec2, UVec2};
+use glam::{dvec2, vec2, DVec2, UVec2, Vec2};
 
 use super::GUIRects;
 
@@ -16,11 +16,22 @@ pub struct KeyboardInput {
 pub enum UIEvent<'a> {
     Resize(UVec2),
     MouseButton(UIEventData<MouseInput>),
-    MouseMove(UIEventData<Vec2>),
+
+    /// Returns new mouse position
+    MouseMove {
+        corrected: UIEventData<Vec2>,
+        raw: Vec2,
+    },
+    /// Returns mouse movement delta,
+    MouseMoveDelta(UIEventData<DVec2>),
+
+    CursorEnter,
+    CursorExit,
+
     MouseWheel(UIEventData<Vec2>),
     KeyboardInput(UIEventData<KeyboardInput>),
-	Update,
-    Render{
+    Update,
+    Render {
         gui_rects: &'a mut GUIRects,
     },
 }
@@ -66,9 +77,13 @@ pub fn default_event_transformation(event: &EngineEvent, size: UVec2) -> Option<
                 }
             }
             //winit::event::WindowEvent::ModifiersChanged(_) => todo!(),
-            winit::event::WindowEvent::CursorMoved { position, .. } => Some(UIEvent::MouseMove(
-                UIEventData::<Vec2>::new(vec2(position.x as f32, size.y as f32 - position.y as f32)),
-            )),
+            winit::event::WindowEvent::CursorMoved { position, .. } => Some(UIEvent::MouseMove {
+                corrected: UIEventData::<Vec2>::new(vec2(
+                    position.x as f32,
+                    size.y as f32 - position.y as f32,
+                )),
+                raw: vec2(position.x as f32, position.y as f32),
+            }),
             winit::event::WindowEvent::MouseWheel { delta, .. } => {
                 let d = match delta {
                     winit::event::MouseScrollDelta::LineDelta(x, y) => vec2(*x, *y),
@@ -84,9 +99,22 @@ pub fn default_event_transformation(event: &EngineEvent, size: UVec2) -> Option<
                     state: *state,
                 })),
             ),
+            winit::event::WindowEvent::CursorEntered { .. } => {
+                Some(UIEvent::CursorEnter)
+            },
+            winit::event::WindowEvent::CursorLeft { .. } => {
+                Some(UIEvent::CursorExit)
+            },
+            //winit::event::WindowEvent::AxisMotion { device_id: (), axis: (), value: () }
             _ => None,
         },
         EngineEvent::ScaleFactorChanged { .. } => None,
+        EngineEvent::DeviceEvent { device_id, event } => match event {
+            winit::event::DeviceEvent::MouseMotion { delta } => Some(UIEvent::MouseMoveDelta(
+                UIEventData::new(dvec2(delta.0, delta.1)),
+            )),
+            _ => None,
+        },
     }
 }
 

@@ -41,7 +41,8 @@ impl RenderSystem {
                 let new_size = physical_size.clone();
                 return Some(uvec2(new_size.width, new_size.height));
             }
-            EngineEvent::ScaleFactorChanged { new_inner_size, .. } => {
+            EngineEvent::ScaleFactorChanged { new_inner_size, scale_factor } => {
+                //println!("Required Scale Factor: {:?}", scale_factor);
                 return Some(*new_inner_size);
             }
             _ => return None,
