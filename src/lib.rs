@@ -17,6 +17,8 @@ pub mod entity_component;
 pub mod runtime;
 pub use runtime::Runtime;
 
+pub use uuid;
+
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop}, window::{WindowBuilder, Window},
