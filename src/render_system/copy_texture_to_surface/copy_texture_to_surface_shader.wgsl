@@ -34,6 +34,9 @@ fn vs_main(
 [[stage(fragment)]]
 fn fs_main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
 	let coord = in.uv.xy;
-	let s_color = textureSample(copy_texture , copy_texture_sampler , coord);
-	return s_color;
+	let color_sample = textureSample(copy_texture , copy_texture_sampler , coord);
+	let color_only = vec3<f32>(color_sample.x, color_sample.y, color_sample.z);
+	let color_corrected = pow(color_only, vec3<f32>(2.2));
+	let final_color = vec4<f32>(color_corrected.x, color_corrected.y, color_corrected.z, color_sample.w);
+	return final_color;
 }

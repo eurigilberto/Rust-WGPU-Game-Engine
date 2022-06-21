@@ -8,8 +8,8 @@ use super::{graphic::RectGraphic, BorderRadius, ExtraBufferData, GUIRects, RectM
 
 #[derive(Copy, Clone)]
 pub struct Border {
-    size: u32, //?
-    color: ExtraBufferData<RGBA>,
+    pub size: u32, //?
+    pub color: ExtraBufferData<RGBA>,
 }
 
 #[derive(Copy, Clone)]

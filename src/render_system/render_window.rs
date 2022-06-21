@@ -37,7 +37,6 @@ impl RenderWindow {
             .await
             .expect("Device and Queue could not be created");
 
-        //println!("size {} {}", size.width, size.height);
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface.get_preferred_format(&adapter).expect("Could not get prefered format"),

@@ -1,3 +1,5 @@
+use std::ops::Mul;
+
 use crate::color::hsla::HSLA;
 
 pub enum RGBElems {
@@ -73,6 +75,20 @@ impl RGBA {
     pub fn set_alpha(mut self, alpha: f32)->Self{
         self.a = alpha;
         self
+    }
+}
+
+impl Mul<f32> for RGBA{
+    type Output = RGBA;
+
+    /// The mutliplication does not change the alpha
+    fn mul(self, rhs: f32) -> Self::Output {
+        Self{
+            r: self.r * rhs,
+            g: self.g * rhs,
+            b: self.b * rhs,
+            a: self.a,
+        }
     }
 }
 

@@ -66,6 +66,8 @@ struct VertexOutput {
 	// z - color data index
 	[[location(7), interpolate(flat)]] texture_extra_data: vec4<u32>;
 
+	[[location(8)]] border_color: vec4<f32>;
+
 	//Required built in
     [[builtin(position)]] clip_position: vec4<f32>;
 };
@@ -144,7 +146,7 @@ fn vs_main(
 	out.mask = rect_mask.data[rect_mask_index];
 	out.texture_extra_data = vec4<u32>(0u,0u,0u,0u);
 
-	// Get data for mask type
+	// Get data for mask type //////////////////////////////////////////////
 	if(mask_type == 1u){
 		out.masking_data = border_radius.data[mask_data_index];
 	}
@@ -171,7 +173,7 @@ fn vs_main(
 		out.masking_data = vec4<f32>(0.0, 0.0, 0.0, 0.0);
 	}
 
-	// Get data for coloring type
+	// Get data for coloring type //////////////////////////////////////////////
 	if(coloring_type == 0u){
 		out.coloring_data = color.data[coloring_data_index];
 	}
@@ -202,6 +204,13 @@ fn vs_main(
 	out.half_size = rect_px_size * 0.5;
 	out.vert_px_position = vertex_position_offset * out.half_size;
 
+	// Get data for the border color /////////////////////////////////////////////////
+	if (border_size > 0u){
+		out.border_color = color.data[border_color_index];
+	}else{
+		out.border_color = vec4<f32>(0.0,0.0,0.0,0.0);
+	}
+	
 	out.data_vector_0 = vec4<u32>(
 		mask_type,
 		coloring_type,
@@ -248,13 +257,13 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 	let mask_type = in.data_vector_0.x;
 	let coloring_type = in.data_vector_0.y;
 	let border_color_index = in.data_vector_0.z;
-	let border_size = in.data_vector_0.y;
+	let border_size = in.data_vector_0.w;
 
 	let mask_texture_position = vec2<f32>(in.masking_data.x, in.masking_data.y);
 	let fwidth_mask_data = fwidth(mask_texture_position);
 
 	var mask = 1.0;
-	var border_mask = 1.0;
+	var border_mask = 0.0;
 	
 	let inside_mask = in.mask.x < in.vert_position.x && in.mask.y < in.vert_position.y && in.mask.z > in.vert_position.x && in.mask.w > in.vert_position.y;
 	if(!inside_mask){
@@ -267,22 +276,56 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 	// z - array index | w - sample component
 	// texture_extra_data
 
-	if(mask_type == 1u){//Round rect mask
+	if (mask_type == 0u){//Rect
+		if(border_size > 0u){
+			let dist_to_border = in.half_size - abs(in.vert_px_position);
+			let dist = min(dist_to_border.x, dist_to_border.y);
+			let b_size = f32(border_size);
+			let b_dist = clamp(dist - b_size + 0.5, 0.0, 1.0);
+			border_mask = 1.0 - b_dist;
+		}
+	}else if(mask_type == 1u){//Round rect mask
 		let box_dst = -(sd_rounded_box(in.vert_px_position, in.half_size, in.masking_data) - 0.5);
 		mask = clamp(box_dst, 0.0, 1.0);
+		if(border_size > 0u){
+			let b_size = f32(border_size);
+			let b_dist = clamp(box_dst - b_size, 0.0, 1.0);
+			border_mask = 1.0 - b_dist;
+		}
 	}else if(mask_type == 2u){//Circle mask
 		let distance_to_point = length(in.vert_px_position);
 		var radius = 0.0;
+		var b_size = f32(border_size);
+		var b_rad = 0.0;
+
 		if(in.half_size.y < in.half_size.x) {
 			let radius_interpolator = abs(in.vert_px_position.y / in.half_size.y);
 			let corrected_lerp = radius_interpolator * radius_interpolator;
 			radius = mix(in.half_size.x, in.half_size.y, corrected_lerp);
+
+			if(border_size > 0u){
+				let radius_interpolator = abs(in.vert_px_position.y / (in.half_size.y - b_size));
+				let corrected_lerp = radius_interpolator * radius_interpolator;
+				b_rad = mix(in.half_size.x - b_size, in.half_size.y - b_size, corrected_lerp);
+			}
 		}else{
 			let radius_interpolator = abs(in.vert_px_position.x / in.half_size.x);
 			let corrected_lerp = radius_interpolator * radius_interpolator;
 			radius = mix(in.half_size.y, in.half_size.x, corrected_lerp);
+
+			if(border_size > 0u){
+				let radius_interpolator = abs(in.vert_px_position.x / (in.half_size.x - b_size));
+				let corrected_lerp = radius_interpolator * radius_interpolator;
+				b_rad = mix(in.half_size.y - b_size, in.half_size.x - b_size, corrected_lerp);
+			}
 		}
-		mask = clamp(-(distance_to_point - radius - 0.5), 0.0, 1.0);
+		let circle_dist = -(distance_to_point - radius - 0.5);
+		mask = clamp(circle_dist, 0.0, 1.0);
+		if(border_size > 0u){
+			let border_dist = -(distance_to_point - b_rad - 0.5);
+			let b_dist = clamp(border_dist, 0.0, 1.0);
+			border_mask = 1.0 - b_dist;
+		}
 	}else if(mask_type == 3u || mask_type == 4u){//Texture mask
 		let array_index = in.texture_extra_data.x;
 		let sample_component = in.texture_extra_data.y;
@@ -290,10 +333,10 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 			i32(array_index), 0.0, vec2<i32>(0, 0));
 		let sample = sampled_pixel[sample_component];
 
-		if(mask_type == 3u){
+		if(mask_type == 3u){//Texture mask
 			mask = clamp(sample, 0.0, 1.0);
 		}
-		else if(mask_type == 4u){
+		else if(mask_type == 4u){//SDF mask
 			let grad = length(fwidth_mask_data) * 100.0;
 			let pixel_dist = (sample * 0.75) / grad;
 			mask = clamp(0.5 - pixel_dist, 0.0, 1.0);
@@ -343,7 +386,9 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 	else{
 		discard;
 	}
-	out.main_color = vec4<f32>(main_color.x, main_color.y, main_color.z, main_color.w * mask);
+
+	let final_color = mix(main_color, in.border_color, border_mask);
+	out.main_color = vec4<f32>(final_color.x, final_color.y, final_color.z, final_color.w * mask);
 
 	// Background debugging, just in case something does not make sense
 	//let main_color_w_bg = mix(vec4<f32>(1.0,0.0,0.0,1.0), main_color, main_color.w * mask);

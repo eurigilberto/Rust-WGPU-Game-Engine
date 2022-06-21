@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 pub use glam;
 pub mod color;
 pub mod engine_time;
@@ -90,6 +92,7 @@ pub fn render<R: 'static + Runtime>(
     Ok(())
 }
 
+#[derive(Debug)]
 pub enum EngineEvent {
     WinitEvent(winit::event::WindowEvent<'static>),
     ScaleFactorChanged {
@@ -114,7 +117,7 @@ pub enum WindowOrDeviceEvent<'a>{
     Device(DeviceId, winit::event::DeviceEvent)
 }
 
-fn remove_any_resize_event(event_queue: &mut Vec<EngineEvent>){
+fn remove_any_resize_event(event_queue: &mut VecDeque<EngineEvent>){
     let mut found_resize = false;
     let mut remove_index = 0;
     for (index, ee) in event_queue.into_iter().enumerate(){
@@ -129,38 +132,37 @@ fn remove_any_resize_event(event_queue: &mut Vec<EngineEvent>){
     }
 }
 
-fn push_window_event(event_queue: &mut Vec<EngineEvent>, window_event: winit::event::WindowEvent){
+fn push_window_event(event_queue: &mut VecDeque<EngineEvent>, window_event: winit::event::WindowEvent){
     if let WindowEvent::ScaleFactorChanged {
         scale_factor,
         new_inner_size,
     } = window_event
     {
-        event_queue.push(EngineEvent::ScaleFactorChanged {
+        event_queue.push_back(EngineEvent::ScaleFactorChanged {
             scale_factor: scale_factor,
             new_inner_size: uvec2(new_inner_size.width, new_inner_size.height),
-        })
+        });
     } else {
         if let Some(static_event) = window_event.to_static() {
-            event_queue.push(EngineEvent::WinitEvent(static_event));
+            event_queue.push_back(EngineEvent::WinitEvent(static_event));
         }
     }
 }
 
-fn push_event(event_queue: &mut Vec<EngineEvent>, event: WindowOrDeviceEvent) {
+fn push_event(event_queue: &mut VecDeque<EngineEvent>, event: WindowOrDeviceEvent) {
     if event_queue.len() == event_queue.capacity() {
-        panic!("Event Queue is full")
-    } else {
-        match event {
-            WindowOrDeviceEvent::Window(window_event) => {
-                if is_resize_event(&window_event) {
-                    remove_any_resize_event(event_queue);
-                }
-                push_window_event(event_queue, window_event);
-            },
-            WindowOrDeviceEvent::Device(device_id, event) => {
-                event_queue.push(EngineEvent::DeviceEvent { device_id, event });
-            },
-        }
+        event_queue.pop_front();
+    }
+    match event {
+        WindowOrDeviceEvent::Window(window_event) => {
+            if is_resize_event(&window_event) {
+                remove_any_resize_event(event_queue);
+            }
+            push_window_event(event_queue, window_event);
+        },
+        WindowOrDeviceEvent::Device(device_id, event) => {
+            event_queue.push_back(EngineEvent::DeviceEvent { device_id, event });
+        },
     }
 }
 
@@ -171,7 +173,7 @@ pub fn start_engine_loop<R: 'static + Runtime>(
 ) {
     engine.time.reset();
     let mut first_frame = true;
-    let mut event_queue = Vec::<EngineEvent>::with_capacity(100);
+    let mut event_queue = VecDeque::<EngineEvent>::with_capacity(100);
     event_loop.run(move |event, _, control_flow| {
         match event {
             Event::LoopDestroyed => {

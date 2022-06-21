@@ -6,18 +6,19 @@ use crate::{
 };
 
 use super::{
-    create_new_rect_element, ColoringType, LinearGradient, MaskType, RadialGradient, TextureSlice, Border,
+    create_new_rect_element, Border, ColoringType, LinearGradient, MaskType, RadialGradient,
+    TextureSlice,
 };
 
 macro_rules! into_extra_buffer {
     ($t: ident) => {
-        impl Into<ExtraBufferData<$t>> for $t{
+        impl Into<ExtraBufferData<$t>> for $t {
             fn into(self) -> ExtraBufferData<$t> {
                 ExtraBufferData::NewData(self)
             }
         }
 
-        impl Into<ExtraBufferData<$t>> for u16{
+        impl Into<ExtraBufferData<$t>> for u16 {
             fn into(self) -> ExtraBufferData<$t> {
                 ExtraBufferData::PrevIndex(self)
             }
@@ -59,6 +60,18 @@ impl ElementBuilder {
             mask_type,
             coloring_type,
         }
+    }
+
+    pub fn set_border(mut self, new_border: Option<Border>) -> Self {
+        match self.mask_type {
+            MaskType::Rect { ref mut border }
+            | MaskType::RoundRect { ref mut border, .. }
+            | MaskType::Circle { ref mut border } => {
+                *border = new_border;
+            }
+            MaskType::TextureMask(..) | MaskType::SDFFont(..) => { /* No Op */ }
+        }
+        self
     }
 
     pub fn set_color(mut self, color: ExtraBufferData<RGBA>) -> Self {
