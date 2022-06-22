@@ -34,29 +34,23 @@ into_extra_buffer!(LinearGradient);
 into_extra_buffer!(RectMask);
 
 pub struct ElementBuilder {
-    screen_size: UVec2,
     position: Vec2,
     size: Vec2,
     rotation: f32,
-    rect_mask: ExtraBufferData<RectMask>,
+    rect_mask: Option<ExtraBufferData<RectMask>>,
     mask_type: MaskType,
     coloring_type: ColoringType,
 }
 
 impl ElementBuilder {
-    pub fn new(screen_size: UVec2, position: Vec2, size: Vec2) -> Self {
-        let rect_mask = RectMask {
-            position: (screen_size.as_vec2() * 0.5),
-            size: screen_size.as_vec2(),
-        };
+    pub fn new( position: Vec2, size: Vec2) -> Self {
         let mask_type = MaskType::Rect { border: None };
         let coloring_type = ColoringType::Color(ExtraBufferData::NewData(RGBA::WHITE));
         Self {
-            screen_size,
             position,
             size,
             rotation: 0.0,
-            rect_mask: ExtraBufferData::NewData(rect_mask),
+            rect_mask: None,
             mask_type,
             coloring_type,
         }
@@ -119,7 +113,7 @@ impl ElementBuilder {
     }
 
     pub fn set_rect_mask(mut self, rect_mask: ExtraBufferData<RectMask>) -> Self {
-        self.rect_mask = rect_mask;
+        self.rect_mask = Some(rect_mask);
         self
     }
 
@@ -129,13 +123,18 @@ impl ElementBuilder {
     }
 
     pub fn build(mut self, gui_rects: &mut GUIRects) {
+        if let None = self.rect_mask{
+            self.rect_mask = Some(RectMask{
+                position: gui_rects.screen_size.as_vec2() * 0.5,
+                size: gui_rects.screen_size.as_vec2(),
+            }.into());
+        }
         create_new_rect_element(
             gui_rects,
-            self.screen_size,
             self.position,
             self.size,
             self.rotation,
-            self.rect_mask,
+            self.rect_mask.unwrap(),
             &self.mask_type,
             &self.coloring_type,
         );

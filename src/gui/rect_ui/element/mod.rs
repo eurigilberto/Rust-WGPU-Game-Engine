@@ -305,7 +305,6 @@ fn add_coloring_type_data(
 /// Creates an element and pushes all the
 pub fn create_new_rect_element(
     gui_rects: &mut GUIRects,
-    screen_size: UVec2,
     position: Vec2,
     size: Vec2,
     rotation: f32,
@@ -324,7 +323,7 @@ pub fn create_new_rect_element(
             let rect_mask_index = gui_rects
                 .rect_collection
                 .rect_mask
-                .push_cpu(rect_mask.transform_to_gpu(screen_size));
+                .push_cpu(rect_mask.transform_to_gpu(gui_rects.screen_size));
             element.rect_mask_index = rect_mask_index as u16;
         }
         ExtraBufferData::PrevIndex(rect_mask_index) => {

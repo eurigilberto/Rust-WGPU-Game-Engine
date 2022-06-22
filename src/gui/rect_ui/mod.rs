@@ -27,6 +27,7 @@ pub struct GUIRects {
     pub rect_collection: RectCollection,
     pub texture_atlas: TextureAtlas,
     pub render_texture: GUIRenderTexture,
+    pub screen_size: UVec2
 }
 
 #[derive(Copy, Clone)]
@@ -125,6 +126,7 @@ impl GUIRects {
             rect_collection,
             texture_atlas,
             render_texture,
+            screen_size: size
         }
     }
 
@@ -150,6 +152,7 @@ impl GUIRects {
             .unwrap();
         mask_rt.resize_texture(new_size, render_system);
 
+        self.screen_size = new_size;
         self.render_pass_data.resize(new_size, render_system);
     }
 }
