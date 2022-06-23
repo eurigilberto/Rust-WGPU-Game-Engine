@@ -2,7 +2,7 @@ use glam::{UVec2, Vec2};
 
 use crate::{
     color::RGBA,
-    gui::rect_ui::{BorderRadius, ExtraBufferData, GUIRects, RectMask},
+    gui::rect_ui::{BorderRadius, ExtraBufferData, GUIRects, Rect},
 };
 
 use super::{
@@ -31,13 +31,13 @@ into_extra_buffer!(BorderRadius);
 into_extra_buffer!(TextureSlice);
 into_extra_buffer!(RadialGradient);
 into_extra_buffer!(LinearGradient);
-into_extra_buffer!(RectMask);
+into_extra_buffer!(Rect);
 
 pub struct ElementBuilder {
     position: Vec2,
     size: Vec2,
     rotation: f32,
-    rect_mask: Option<ExtraBufferData<RectMask>>,
+    rect_mask: Option<ExtraBufferData<Rect>>,
     mask_type: MaskType,
     coloring_type: ColoringType,
 }
@@ -112,7 +112,7 @@ impl ElementBuilder {
         self
     }
 
-    pub fn set_rect_mask(mut self, rect_mask: ExtraBufferData<RectMask>) -> Self {
+    pub fn set_rect_mask(mut self, rect_mask: ExtraBufferData<Rect>) -> Self {
         self.rect_mask = Some(rect_mask);
         self
     }
@@ -124,7 +124,7 @@ impl ElementBuilder {
 
     pub fn build(mut self, gui_rects: &mut GUIRects) {
         if let None = self.rect_mask{
-            self.rect_mask = Some(RectMask{
+            self.rect_mask = Some(Rect{
                 position: gui_rects.screen_size.as_vec2() * 0.5,
                 size: gui_rects.screen_size.as_vec2(),
             }.into());

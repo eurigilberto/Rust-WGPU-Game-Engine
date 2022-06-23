@@ -4,7 +4,7 @@ use glam::{UVec2, Vec2};
 
 use crate::color::RGBA;
 
-use super::{graphic::RectGraphic, BorderRadius, ExtraBufferData, GUIRects, RectMask};
+use super::{graphic::RectGraphic, BorderRadius, ExtraBufferData, GUIRects, Rect};
 
 #[derive(Copy, Clone)]
 pub struct Border {
@@ -308,7 +308,7 @@ pub fn create_new_rect_element(
     position: Vec2,
     size: Vec2,
     rotation: f32,
-    rect_mask: ExtraBufferData<RectMask>,
+    rect_mask: ExtraBufferData<Rect>,
     mask_type: &MaskType,
     coloring_type: &ColoringType,
 ) -> Element {

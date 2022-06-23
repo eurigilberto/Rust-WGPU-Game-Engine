@@ -11,6 +11,7 @@ pub mod texture_atlas;
 use glam::{vec2, UVec2, Vec2};
 
 use crate::{
+    math_utils::lerp_vec2,
     render_system::{render_texture::RenderTexture, RenderSystem},
     slotmap::slotmap::Slotmap,
 };
@@ -27,7 +28,7 @@ pub struct GUIRects {
     pub rect_collection: RectCollection,
     pub texture_atlas: TextureAtlas,
     pub render_texture: GUIRenderTexture,
-    pub screen_size: UVec2
+    pub screen_size: UVec2,
 }
 
 #[derive(Copy, Clone)]
@@ -72,26 +73,66 @@ impl Into<[f32; 4]> for BorderRadius {
 }
 
 #[derive(Clone, Copy)]
-pub struct RectMask {
+pub struct Rect {
     pub position: Vec2,
     pub size: Vec2,
 }
 
-impl RectMask {
+impl Rect {
     pub fn transform_to_gpu(&self, screen_size: UVec2) -> [f32; 4] {
         let start_position = vec2(-1.0, -1.0);
-        let bottom_left = start_position
-            + (self.position * 2.0 - self.size) / screen_size.as_vec2();
-        let top_right = start_position
-            + (self.position * 2.0 + self.size) / screen_size.as_vec2();
+        let bottom_left =
+            start_position + (self.position * 2.0 - self.size) / screen_size.as_vec2();
+        let top_right = start_position + (self.position * 2.0 + self.size) / screen_size.as_vec2();
 
         [bottom_left.x, bottom_left.y, top_right.x, top_right.y]
     }
 
-    pub fn inside_rect(&self, mouse_position: Vec2) -> bool{
+    pub fn inside_rect(&self, mouse_position: Vec2) -> bool {
         let to_mouse_pos = Vec2::abs(mouse_position - self.position);
         let half_size = self.size * 0.5;
         to_mouse_pos.x <= half_size.x && to_mouse_pos.y <= half_size.y
+    }
+
+    pub fn combine_rects(&self, other: &Self) -> Option<Self> {
+        // transform to min mas bounds
+        let rect_a: [Vec2; 2] = [
+            self.position - self.size * 0.5,
+            self.position + self.size * 0.5,
+        ];
+        let rect_b: [Vec2; 2] = [
+            other.position - other.size * 0.5,
+            other.position + other.size * 0.5,
+        ];
+
+        const MAX: usize = 1;
+        const MIN: usize = 0;
+
+        let less_any_comp_vec2 = |a: Vec2, b: Vec2| a.x < b.x || a.y < b.y;
+
+        if less_any_comp_vec2(rect_a[MAX], rect_b[MIN]) || less_any_comp_vec2(rect_b[MAX], rect_a[MIN]) {
+            None
+        } else {
+            let new_min = if less_any_comp_vec2(rect_a[MIN], rect_b[MIN]) {
+                rect_b[MIN]
+            } else {
+                rect_a[MIN]
+            };
+
+            let new_max = if less_any_comp_vec2(rect_a[MAX], rect_b[MAX]) {
+                rect_a[MAX]
+            } else {
+                rect_b[MAX]
+            };
+
+            let new_position = lerp_vec2(new_min, new_max, vec2(0.5, 0.5));
+            let new_size = new_max - new_min;
+            
+            Some(Self {
+                position: new_position,
+                size: new_size,
+            })
+        }
     }
 }
 
@@ -101,9 +142,10 @@ impl GUIRects {
         system_bind_group_layout: &wgpu::BindGroupLayout,
         size: UVec2,
         render_texture_slotmap: &mut Slotmap<RenderTexture>,
+        initial_capacity: usize,
     ) -> Self {
         let texture_atlas = TextureAtlas::new(render_system, 1024, 1024, 2);
-        let rect_collection = RectCollection::new(126, render_system);
+        let rect_collection = RectCollection::new(initial_capacity, render_system);
         let render_pass_data = GUIRenderPassData::new(render_system);
 
         let rect_material = RectMaterial::new(
@@ -126,7 +168,7 @@ impl GUIRects {
             rect_collection,
             texture_atlas,
             render_texture,
-            screen_size: size
+            screen_size: size,
         }
     }
 

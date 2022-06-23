@@ -18,10 +18,13 @@ pub struct RGBA {
 }
 
 impl RGBA {
-    pub fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
+    pub const fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
         Self { r, g, b, a }
     }
-    pub fn rrr1(r: f32) -> Self {
+    pub const fn rgb(r: f32, g: f32, b: f32) -> Self{
+        Self { r, g, b, a: 1.0 }
+    }
+    pub const fn rrr1(r: f32) -> Self {
         Self {
             r,
             g: r,
