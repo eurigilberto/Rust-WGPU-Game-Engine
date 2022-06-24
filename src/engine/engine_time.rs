@@ -13,6 +13,8 @@ pub struct EngineTime {
     pub time_data: TimeBufferData,
     pub time_buffer: wgpu::Buffer,
     pub last_render_time: Instant,
+    
+    pub frame_count: u32, 
     accumulated_time: u128,
 
     pub time_since_start: u128,
@@ -38,6 +40,7 @@ impl EngineTime {
         );
 
         Self {
+            frame_count: 0,
             accumulated_time: 0,
             time_since_start: 0,
             frame_time_milis: frame_time_milis,
@@ -47,6 +50,7 @@ impl EngineTime {
         }
     }
     pub fn reset(&mut self) {
+        self.frame_count = 0;
         self.accumulated_time = 0;
         self.time_since_start = 0;
         self.last_render_time = std::time::Instant::now();
@@ -59,6 +63,7 @@ impl EngineTime {
         self.accumulated_time = time_since_last_render.as_millis();
 
         if self.accumulated_time >= self.frame_time_milis {
+            self.frame_count += 1;
             self.last_render_time = now;
             self.time_since_start += self.accumulated_time;
 

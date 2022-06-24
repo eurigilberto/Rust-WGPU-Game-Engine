@@ -42,6 +42,7 @@ pub struct RadialGradient {
     pub start_radius: f32,
 }
 
+#[derive(Clone, Copy)]
 pub struct LinearGradient {
     pub colors: [RGBA; 2],
     pub start_position: Vec2,

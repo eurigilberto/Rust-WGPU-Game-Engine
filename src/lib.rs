@@ -2,7 +2,6 @@ use std::collections::VecDeque;
 
 pub use glam;
 pub mod color;
-pub mod engine_time;
 pub mod font;
 pub mod gui;
 pub mod render_system;
@@ -190,25 +189,34 @@ pub fn start_engine_loop<R: 'static + Runtime>(
                     let mut close_app = || {
                         *control_flow = ControlFlow::Exit;
                     };
-
+                    
+                    let operation_time = std::time::Instant::now();
                     runtime.frame_start(&engine);
+                    engine.operation_time.frame_start_time = operation_time.elapsed().as_secs_f64() * 0.001;
 
                     engine
                         .time
                         .update_buffer(&engine.render_system.render_window.queue);
-                    if !first_frame {
-                        runtime.handle_event_queue(&event_queue, &mut engine, &mut close_app);
-                    }else{
-                        first_frame = false;
-                    }
+                    
+                    let operation_time = std::time::Instant::now();
+                    runtime.handle_event_queue(&event_queue, &mut engine, &mut close_app);
+                    engine.operation_time.event_handling_time = operation_time.elapsed().as_secs_f64() * 0.001;
+
                     event_queue.clear();
                     
+                    let operation_time = std::time::Instant::now();
                     runtime.update(&engine, &mut close_app);
+                    engine.operation_time.update_time = operation_time.elapsed().as_secs_f64() * 0.001;
+
+                    let operation_time = std::time::Instant::now();
                     let render_result = render(&mut engine, &mut runtime);
+                    engine.operation_time.render_time = operation_time.elapsed().as_secs_f64() * 0.001;
                     
                     match render_result {
                         Ok(_) => {
+                            let operation_time = std::time::Instant::now();
                             runtime.frame_end(&mut engine,&mut close_app);
+                            engine.operation_time.frame_end_time = operation_time.elapsed().as_secs_f64() * 0.001;
                         }
                         // Reconfigure the surface if lost
                         Err(wgpu::SurfaceError::Lost) => engine.render_system.configure_surface(),

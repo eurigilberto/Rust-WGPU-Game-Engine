@@ -72,7 +72,7 @@ impl Into<[f32; 4]> for BorderRadius {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct Rect {
     pub position: Vec2,
     pub size: Vec2,
@@ -92,6 +92,10 @@ impl Rect {
         let to_mouse_pos = Vec2::abs(mouse_position - self.position);
         let half_size = self.size * 0.5;
         to_mouse_pos.x <= half_size.x && to_mouse_pos.y <= half_size.y
+    }
+
+    pub fn get_top_left_position(&self) -> Vec2{
+        self.position + vec2(-self.size.x * 0.5, self.size.y * 0.5)
     }
 
     pub fn combine_rects(&self, other: &Self) -> Option<Self> {

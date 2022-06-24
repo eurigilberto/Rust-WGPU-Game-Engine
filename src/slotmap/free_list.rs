@@ -109,6 +109,7 @@ impl FreeList {
         let mut slice = Vec::<(usize, usize)>::new();
         if let Some(head) = &self.head {
             let mut current_bucket = Rc::clone(head);
+            //println!("Create free list?");
             loop {
                 let (start, end) = (
                     RefCell::borrow(&current_bucket).start_index,
@@ -139,7 +140,7 @@ impl FreeList {
         match &self.head {
             Some(head) => {
                 let mut current_tail = Rc::clone(head);
-
+                //println!("Get Tail?");
                 loop {
                     let next_bucket = RefCell::borrow(&current_tail).get_next_bucket();
                     match next_bucket {
@@ -208,7 +209,7 @@ impl FreeList {
                     }
                 } else {
                     let mut current_bucket = Rc::clone(head);
-
+                    //println!("Free slot?");
                     loop {
                         let range_start = RefCell::borrow(&current_bucket).end_index;
                         let next_bucket = RefCell::borrow(&current_bucket).get_next_bucket();

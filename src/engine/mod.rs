@@ -1,11 +1,16 @@
 use glam::UVec2;
 use winit::{event_loop::EventLoop, window::{WindowBuilder, Window}};
 
-use crate::{render_system, engine_time};
+pub mod engine_time;
+pub mod op_time;
+use crate::{render_system};
+
+use self::op_time::OperationTime;
 
 pub struct Engine {
     pub render_system: render_system::RenderSystem,
     pub time: engine_time::EngineTime,
+	pub operation_time: op_time::OperationTime,
 
     pub system_bind_group_layout: wgpu::BindGroupLayout,
     pub system_bind_group: wgpu::BindGroup,
@@ -47,7 +52,7 @@ impl Engine {
         Self {
             render_system,
             time: engine_time,
-
+			operation_time: OperationTime::new(),
             system_bind_group_layout,
             system_bind_group,
         }
