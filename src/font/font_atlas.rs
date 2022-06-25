@@ -118,6 +118,10 @@ impl FontAtlas {
     }
 }
 
+pub struct FontBitmapCollection{
+    texture_slices: Vec<FontTextureSlice>,
+}
+
 fn create_character_slices(
     font: &fontdue::Font,
     character_size: f32,

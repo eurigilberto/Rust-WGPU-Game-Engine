@@ -217,6 +217,24 @@ pub fn add_mask_type_data(mask_type: &MaskType, element: &mut Element, gui_rects
     }
 }
 
+pub fn push_radial_gradient(gui_rects: &mut GUIRects, radial_gradient: &RadialGradient) -> usize {
+    let radial_gradient_index = gui_rects
+        .rect_collection
+        .color
+        .push_cpu(radial_gradient.colors[0].into());
+    gui_rects
+        .rect_collection
+        .color
+        .push_cpu(radial_gradient.colors[1].into());
+    gui_rects.rect_collection.color.push_cpu([
+        radial_gradient.center_position.x,
+        radial_gradient.center_position.y,
+        radial_gradient.end_radius,
+        radial_gradient.start_radius,
+    ]);
+    radial_gradient_index
+}
+
 fn add_coloring_type_data(
     coloring_type: &ColoringType,
     element: &mut Element,
@@ -254,7 +272,7 @@ fn add_coloring_type_data(
             element.coloring_type = 2;
             match radial_gradient {
                 ExtraBufferData::NewData(radial_gradient) => {
-                    let radial_gradient_index = gui_rects
+                    let radial_gradient_index = push_radial_gradient(gui_rects, radial_gradient); /*gui_rects
                         .rect_collection
                         .color
                         .push_cpu(radial_gradient.colors[0].into());
@@ -267,7 +285,7 @@ fn add_coloring_type_data(
                         radial_gradient.center_position.y,
                         radial_gradient.end_radius,
                         radial_gradient.start_radius,
-                    ]);
+                    ]);*/
                     element.coloring_data_index = radial_gradient_index as u16;
                 }
                 ExtraBufferData::PrevIndex(radial_gradient_index) => {

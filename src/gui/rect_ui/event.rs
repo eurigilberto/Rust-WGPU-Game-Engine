@@ -1,11 +1,27 @@
 use crate::EngineEvent;
 use glam::{dvec2, vec2, DVec2, UVec2, Vec2};
+use winit::event::{MouseButton, ElementState};
 
 use super::GUIRects;
 
 pub struct MouseInput {
     pub button: winit::event::MouseButton,
     pub state: winit::event::ElementState,
+}
+
+impl MouseInput {
+    pub fn is_left_pressed(&self)->bool{
+        if let (MouseButton::Left, ElementState::Pressed) = (self.button, self.state) {
+            return true;
+        }
+        return false
+    }
+    pub fn is_left_released(&self)->bool{
+        if let (MouseButton::Left, ElementState::Released) = (self.button, self.state) {
+            return true;
+        }
+        return false
+    }
 }
 
 pub struct KeyboardInput {

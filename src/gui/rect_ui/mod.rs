@@ -117,17 +117,10 @@ impl Rect {
         if less_any_comp_vec2(rect_a[MAX], rect_b[MIN]) || less_any_comp_vec2(rect_b[MAX], rect_a[MIN]) {
             None
         } else {
-            let new_min = if less_any_comp_vec2(rect_a[MIN], rect_b[MIN]) {
-                rect_b[MIN]
-            } else {
-                rect_a[MIN]
-            };
+            
+            let new_min = rect_a[MIN].max(rect_b[MIN]);
 
-            let new_max = if less_any_comp_vec2(rect_a[MAX], rect_b[MAX]) {
-                rect_a[MAX]
-            } else {
-                rect_b[MAX]
-            };
+            let new_max = rect_a[MAX].min(rect_b[MAX]);
 
             let new_position = lerp_vec2(new_min, new_max, vec2(0.5, 0.5));
             let new_size = new_max - new_min;
