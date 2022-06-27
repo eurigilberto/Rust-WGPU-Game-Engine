@@ -17,7 +17,7 @@ pub use engine::Engine;
 pub mod entity_component;
 pub mod runtime;
 pub use runtime::Runtime;
-
+pub use rand;
 pub use uuid;
 
 use winit::{

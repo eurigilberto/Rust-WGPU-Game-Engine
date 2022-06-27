@@ -47,7 +47,7 @@ pub struct FontAtlas {
     pub font_sdf_texture: Vec<f16>,
 }
 
-fn parse_font_from_bytes(font_bytes: &[u8], scale: f32) -> fontdue::FontResult<fontdue::Font> {
+pub fn parse_font_from_bytes(font_bytes: &[u8], scale: f32) -> fontdue::FontResult<fontdue::Font> {
     fontdue::Font::from_bytes(
         font_bytes,
         fontdue::FontSettings {
@@ -57,6 +57,7 @@ fn parse_font_from_bytes(font_bytes: &[u8], scale: f32) -> fontdue::FontResult<f
     )
 }
 
+#[derive(Clone, Copy)]
 pub enum FontCharLimit {
     All,
     LimitedCount(usize),
@@ -82,7 +83,6 @@ impl FontAtlas {
         character_size: f32,
         font_char_limit: FontCharLimit,
     ) -> Result<Self, FontCreationError> {
-        // Read the font data. std::fs::read(file_path)
         match parse_font_from_bytes(file_data, character_size) {
             Ok(font) => {
                 let mut slice_coords = print_time!(
@@ -116,10 +116,6 @@ impl FontAtlas {
             Err(error) => return Err(FontCreationError::FontFileParsing(String::from(error))),
         }
     }
-}
-
-pub struct FontBitmapCollection{
-    texture_slices: Vec<FontTextureSlice>,
 }
 
 fn create_character_slices(
@@ -205,11 +201,11 @@ fn create_character_bitmaps(
     bitmaps
 }
 
-fn generate_sdf_bitmaps(bitmaps: &Vec<BitmapGlyph>, buffer_size: usize) -> Vec<Vec<f16>> {
+pub fn generate_sdf_bitmaps(bitmaps: &Vec<BitmapGlyph>, padding_size: usize) -> Vec<Vec<f16>> {
     bitmaps
         .par_iter()
         .map(|bitmap| {
-            let bitmap_sdf = render_sdf(bitmap, buffer_size);
+            let bitmap_sdf = render_sdf(bitmap, padding_size);
             let bitmap_sdf_half: Vec<f16> = bitmap_sdf
                 .iter()
                 .map(|value| f16::from_f32(*value as f32))
@@ -263,20 +259,24 @@ fn create_font_sdf_texture(
             cursor.y + slice.get_padded_height(),
         );
 
-        for v_index in 0..slice.get_padded_height() {
-            let line_range = (v_index * slice.get_padded_width()) as usize
-                ..((v_index + 1) * slice.get_padded_width()) as usize;
+        let slc_padded_width = slice.get_padded_width() as usize;
+        let slc_padded_height = slice.get_padded_height() as usize;
+        for v_index in 0..slc_padded_height {
+            let start_index = v_index * slc_padded_width;
+            let end_index = (v_index + 1) * slc_padded_width;
+            let line_range = start_index .. end_index;
             for (h_index, value_index) in line_range.enumerate() {
                 let value = sdf_bitmap[value_index];
 
                 let tex_h_coord = cursor.x + h_index as u32;
-                let tex_v_coord = cursor.y + v_index;
+                let tex_v_coord = cursor.y + v_index as u32;
 
                 let pixel_position = uvec2(tex_h_coord, tex_v_coord);
                 let inside_expected_region = start_position.x <= pixel_position.x
                     && start_position.y <= pixel_position.y
                     && end_position.x >= pixel_position.x
                     && end_position.y >= pixel_position.y;
+                
                 assert!(
                     inside_expected_region,
                     "Not inside expected region {:?}",

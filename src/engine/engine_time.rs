@@ -63,6 +63,7 @@ impl EngineTime {
         self.accumulated_time = time_since_last_render.as_millis();
 
         if self.accumulated_time >= self.frame_time_milis {
+            //println!("Last Frame Time {}", self.accumulated_time);
             self.frame_count += 1;
             self.last_render_time = now;
             self.time_since_start += self.accumulated_time;

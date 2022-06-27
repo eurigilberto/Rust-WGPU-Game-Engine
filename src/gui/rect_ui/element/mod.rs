@@ -235,6 +235,24 @@ pub fn push_radial_gradient(gui_rects: &mut GUIRects, radial_gradient: &RadialGr
     radial_gradient_index
 }
 
+pub fn push_linear_gradient(gui_rects: &mut GUIRects, linear_gradient: &LinearGradient) -> usize {
+    let linear_gradient_index = gui_rects
+        .rect_collection
+        .color
+        .push_cpu(linear_gradient.colors[0].into());
+    gui_rects
+        .rect_collection
+        .color
+        .push_cpu(linear_gradient.colors[1].into());
+    gui_rects.rect_collection.color.push_cpu([
+        linear_gradient.start_position.x,
+        linear_gradient.start_position.y,
+        linear_gradient.end_position.x,
+        linear_gradient.end_position.y,
+    ]);
+    linear_gradient_index
+}
+
 fn add_coloring_type_data(
     coloring_type: &ColoringType,
     element: &mut Element,
@@ -272,20 +290,7 @@ fn add_coloring_type_data(
             element.coloring_type = 2;
             match radial_gradient {
                 ExtraBufferData::NewData(radial_gradient) => {
-                    let radial_gradient_index = push_radial_gradient(gui_rects, radial_gradient); /*gui_rects
-                        .rect_collection
-                        .color
-                        .push_cpu(radial_gradient.colors[0].into());
-                    gui_rects
-                        .rect_collection
-                        .color
-                        .push_cpu(radial_gradient.colors[1].into());
-                    gui_rects.rect_collection.color.push_cpu([
-                        radial_gradient.center_position.x,
-                        radial_gradient.center_position.y,
-                        radial_gradient.end_radius,
-                        radial_gradient.start_radius,
-                    ]);*/
+                    let radial_gradient_index = push_radial_gradient(gui_rects, radial_gradient);
                     element.coloring_data_index = radial_gradient_index as u16;
                 }
                 ExtraBufferData::PrevIndex(radial_gradient_index) => {
@@ -297,20 +302,7 @@ fn add_coloring_type_data(
             element.coloring_type = 3;
             match linear_gradient {
                 ExtraBufferData::NewData(linear_gradient) => {
-                    let linear_gradient_index = gui_rects
-                        .rect_collection
-                        .color
-                        .push_cpu(linear_gradient.colors[0].into());
-                    gui_rects
-                        .rect_collection
-                        .color
-                        .push_cpu(linear_gradient.colors[1].into());
-                    gui_rects.rect_collection.color.push_cpu([
-                        linear_gradient.start_position.x,
-                        linear_gradient.start_position.y,
-                        linear_gradient.end_position.x,
-                        linear_gradient.end_position.y,
-                    ]);
+                    let linear_gradient_index = push_linear_gradient(gui_rects, linear_gradient);
                     element.coloring_data_index = linear_gradient_index as u16;
                 }
                 ExtraBufferData::PrevIndex(linear_gradient_index) => {
