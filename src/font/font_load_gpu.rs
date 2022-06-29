@@ -73,7 +73,7 @@ pub fn write_font_to_gpu(
             font_chars_height.push(CharInfoIndex {
                 collection_index: coll_index,
                 char_index,
-                char_height: char_info.metrics.height,
+                char_height: char_info.get_padded_height() as usize,
             });
         }
     }

@@ -29,6 +29,8 @@ impl CharacterInfo {
 pub struct FontCharacters {
     pub sdf_bitmap_collection: Vec<Vec<f16>>,
     pub character_info_collection: Vec<CharacterInfo>,
+    pub size_factor: f32,
+    pub padding: usize,
 }
 
 impl FontCharacters {
@@ -40,6 +42,7 @@ impl FontCharacters {
     ) -> Result<Self, FontCreationError> {
         match parse_font_from_bytes(file_data, character_size) {
             Ok(font) => {
+                
                 let character_collection =
                     create_character_slices(&font, character_size, bitmap_padding, font_char_limit);
 
@@ -51,6 +54,8 @@ impl FontCharacters {
                 Ok(Self {
                     sdf_bitmap_collection: bitmaps_sdf_half,
                     character_info_collection: character_collection,
+                    size_factor: 1.0 / character_size,
+                    padding: bitmap_padding
                 })
             }
             Err(err) => return Err(FontCreationError::FontFileParsing(String::from(err))),

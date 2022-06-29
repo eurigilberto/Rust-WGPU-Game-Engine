@@ -56,6 +56,10 @@ impl ElementBuilder {
         }
     }
 
+    pub fn new_with_rect(rect: Rect) -> Self{
+        Self::new(rect.position, rect.size)
+    }
+
     pub fn set_border(mut self, new_border: Option<Border>) -> Self {
         match self.mask_type {
             MaskType::Rect { ref mut border }

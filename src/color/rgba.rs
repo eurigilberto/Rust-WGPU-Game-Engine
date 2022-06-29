@@ -18,10 +18,18 @@ pub struct RGBA {
 }
 
 impl RGBA {
+    pub fn rand_rgb() -> Self {
+        Self {
+            r: rand::random(),
+            g: rand::random(),
+            b: rand::random(),
+            a: 1.0,
+        }
+    }
     pub const fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
         Self { r, g, b, a }
     }
-    pub const fn rgb(r: f32, g: f32, b: f32) -> Self{
+    pub const fn rgb(r: f32, g: f32, b: f32) -> Self {
         Self { r, g, b, a: 1.0 }
     }
     pub const fn rrr1(r: f32) -> Self {
@@ -75,18 +83,18 @@ impl RGBA {
         a: 1.0,
     };
 
-    pub fn set_alpha(mut self, alpha: f32)->Self{
+    pub fn set_alpha(mut self, alpha: f32) -> Self {
         self.a = alpha;
         self
     }
 }
 
-impl Mul<f32> for RGBA{
+impl Mul<f32> for RGBA {
     type Output = RGBA;
 
     /// The mutliplication does not change the alpha
     fn mul(self, rhs: f32) -> Self::Output {
-        Self{
+        Self {
             r: self.r * rhs,
             g: self.g * rhs,
             b: self.b * rhs,

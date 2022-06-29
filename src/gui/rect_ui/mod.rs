@@ -98,6 +98,28 @@ impl Rect {
         self.position + vec2(-self.size.x * 0.5, self.size.y * 0.5)
     }
 
+    pub fn intersecting_rect(&self, other: &Self) -> bool {
+        let rect_a: [Vec2; 2] = [
+            self.position - self.size * 0.5,
+            self.position + self.size * 0.5,
+        ];
+        let rect_b: [Vec2; 2] = [
+            other.position - other.size * 0.5,
+            other.position + other.size * 0.5,
+        ];
+
+        const MAX: usize = 1;
+        const MIN: usize = 0;
+
+        let less_any_comp_vec2 = |a: Vec2, b: Vec2| a.x < b.x || a.y < b.y;
+
+        if less_any_comp_vec2(rect_a[MAX], rect_b[MIN]) || less_any_comp_vec2(rect_b[MAX], rect_a[MIN]) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
     pub fn combine_rects(&self, other: &Self) -> Option<Self> {
         // transform to min mas bounds
         let rect_a: [Vec2; 2] = [
