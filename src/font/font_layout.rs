@@ -8,8 +8,7 @@ use crate::{
 use super::font_load_gpu::FontCollection;
 
 pub struct FontElement {
-    pub position: Vec2,
-    pub size: Vec2,
+    pub rect: Rect,
     pub tx_slice: TextureSlice,
 }
 
@@ -50,8 +49,10 @@ pub fn create_font_layout(
 
         if *char != ' ' {
             text_elements.push(FontElement {
-                position: char_position.as_vec2() + (char_size * 0.5) + pos_offset,
-                size: char_size,
+                rect: Rect{
+                    position: char_position.as_vec2() + (char_size * 0.5) + pos_offset,
+                    size: char_size,
+                },
                 tx_slice: char_texture_slice,
             });
         }

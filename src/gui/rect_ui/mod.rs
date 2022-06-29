@@ -79,6 +79,16 @@ pub struct Rect {
 }
 
 impl Rect {
+    pub fn offset_position(mut self, offset: Vec2)->Self{
+        self.position += offset;
+        self
+    }
+
+    pub fn offset_size(mut self, offset: Vec2)->Self{
+        self.size += offset;
+        self
+    }
+
     pub fn transform_to_gpu(&self, screen_size: UVec2) -> [f32; 4] {
         let start_position = vec2(-1.0, -1.0);
         let bottom_left =
@@ -96,6 +106,10 @@ impl Rect {
 
     pub fn get_top_left_position(&self) -> Vec2{
         self.position + vec2(-self.size.x * 0.5, self.size.y * 0.5)
+    }
+
+    pub fn get_left_position(&self) -> Vec2{
+        self.position + vec2(-self.size.x * 0.5, 0.0)
     }
 
     pub fn intersecting_rect(&self, other: &Self) -> bool {
