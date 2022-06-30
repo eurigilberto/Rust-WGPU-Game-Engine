@@ -78,15 +78,45 @@ pub struct Rect {
     pub size: Vec2,
 }
 
+pub struct RectBounds {
+    pub max: Vec2,
+    pub min: Vec2,
+}
+
+impl Into<Rect> for RectBounds {
+    fn into(self) -> Rect {
+        Rect {
+            position: self.min + 0.5 * (self.max - self.min),
+            size: self.max - self.min,
+        }
+    }
+}
+
+impl Into<RectBounds> for Rect {
+    fn into(self) -> RectBounds {
+        RectBounds {
+            min: self.position - self.size * 0.5,
+            max: self.position + self.size * 0.5,
+        }
+    }
+}
+
 impl Rect {
-    pub fn offset_position(mut self, offset: Vec2)->Self{
+    pub fn offset_position(mut self, offset: Vec2) -> Self {
         self.position += offset;
         self
     }
 
-    pub fn offset_size(mut self, offset: Vec2)->Self{
+    pub fn offset_size(mut self, offset: Vec2) -> Self {
         self.size += offset;
         self
+    }
+
+    pub fn width(&self) -> f32 {
+        self.size.x
+    }
+    pub fn height(&self) -> f32 {
+        self.size.y
     }
 
     pub fn transform_to_gpu(&self, screen_size: UVec2) -> [f32; 4] {
@@ -104,30 +134,26 @@ impl Rect {
         to_mouse_pos.x <= half_size.x && to_mouse_pos.y <= half_size.y
     }
 
-    pub fn get_top_left_position(&self) -> Vec2{
+    pub fn top_left_position(&self) -> Vec2 {
         self.position + vec2(-self.size.x * 0.5, self.size.y * 0.5)
     }
 
-    pub fn get_left_position(&self) -> Vec2{
+    pub fn left_position(&self) -> Vec2 {
         self.position + vec2(-self.size.x * 0.5, 0.0)
     }
 
-    pub fn intersecting_rect(&self, other: &Self) -> bool {
-        let rect_a: [Vec2; 2] = [
-            self.position - self.size * 0.5,
-            self.position + self.size * 0.5,
-        ];
-        let rect_b: [Vec2; 2] = [
-            other.position - other.size * 0.5,
-            other.position + other.size * 0.5,
-        ];
+    pub fn bottom_left_position(&self) -> Vec2 {
+        self.position - self.size * 0.5
+    }
 
-        const MAX: usize = 1;
-        const MIN: usize = 0;
+    pub fn intersecting_rect(&self, other: &Self) -> bool {
+        let rect_a: RectBounds = Rect::into(*self);
+        let rect_b: RectBounds = Rect::into(*other);
 
         let less_any_comp_vec2 = |a: Vec2, b: Vec2| a.x < b.x || a.y < b.y;
 
-        if less_any_comp_vec2(rect_a[MAX], rect_b[MIN]) || less_any_comp_vec2(rect_b[MAX], rect_a[MIN]) {
+        if less_any_comp_vec2(rect_a.max, rect_b.min) || less_any_comp_vec2(rect_b.max, rect_a.min)
+        {
             return false;
         } else {
             return true;
@@ -136,31 +162,21 @@ impl Rect {
 
     pub fn combine_rects(&self, other: &Self) -> Option<Self> {
         // transform to min mas bounds
-        let rect_a: [Vec2; 2] = [
-            self.position - self.size * 0.5,
-            self.position + self.size * 0.5,
-        ];
-        let rect_b: [Vec2; 2] = [
-            other.position - other.size * 0.5,
-            other.position + other.size * 0.5,
-        ];
-
-        const MAX: usize = 1;
-        const MIN: usize = 0;
+        let rect_a: RectBounds = Rect::into(*self);
+        let rect_b: RectBounds = Rect::into(*other);
 
         let less_any_comp_vec2 = |a: Vec2, b: Vec2| a.x < b.x || a.y < b.y;
 
-        if less_any_comp_vec2(rect_a[MAX], rect_b[MIN]) || less_any_comp_vec2(rect_b[MAX], rect_a[MIN]) {
+        if less_any_comp_vec2(rect_a.max, rect_b.min) || less_any_comp_vec2(rect_b.max, rect_a.min)
+        {
             None
         } else {
-            
-            let new_min = rect_a[MIN].max(rect_b[MIN]);
-
-            let new_max = rect_a[MAX].min(rect_b[MAX]);
+            let new_min = rect_a.min.max(rect_b.min);
+            let new_max = rect_a.max.min(rect_b.max);
 
             let new_position = lerp_vec2(new_min, new_max, vec2(0.5, 0.5));
             let new_size = new_max - new_min;
-            
+
             Some(Self {
                 position: new_position,
                 size: new_size,

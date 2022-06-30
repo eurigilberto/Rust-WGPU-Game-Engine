@@ -253,6 +253,10 @@ pub fn push_linear_gradient(gui_rects: &mut GUIRects, linear_gradient: &LinearGr
     linear_gradient_index
 }
 
+pub fn push_color(gui_rects: &mut GUIRects, color: RGBA) -> usize{
+    gui_rects.rect_collection.color.push_cpu((color).into())
+}
+
 fn add_coloring_type_data(
     coloring_type: &ColoringType,
     element: &mut Element,
@@ -313,6 +317,13 @@ fn add_coloring_type_data(
     }
 }
 
+pub fn push_rect_mask(rect_mask:Rect, gui_rects: &mut GUIRects)->usize{
+    gui_rects
+    .rect_collection
+    .rect_mask
+    .push_cpu(rect_mask.transform_to_gpu(gui_rects.screen_size))
+}
+
 /// Creates an element and pushes all the
 pub fn create_new_rect_element(
     gui_rects: &mut GUIRects,
@@ -331,10 +342,7 @@ pub fn create_new_rect_element(
 
     match rect_mask {
         ExtraBufferData::NewData(rect_mask) => {
-            let rect_mask_index = gui_rects
-                .rect_collection
-                .rect_mask
-                .push_cpu(rect_mask.transform_to_gpu(gui_rects.screen_size));
+            let rect_mask_index = push_rect_mask(rect_mask, gui_rects);
             element.rect_mask_index = rect_mask_index as u16;
         }
         ExtraBufferData::PrevIndex(rect_mask_index) => {

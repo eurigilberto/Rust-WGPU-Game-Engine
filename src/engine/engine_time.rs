@@ -19,13 +19,13 @@ pub struct EngineTime {
 
     pub time_since_start: u128,
     /// How many milliseconds should a frame take
-    pub frame_time_milis: u128,
+    pub frame_time_micros: u128,
 }
 impl EngineTime {
     /// Create a timer for the system.
     /// [Frame Time] is measured in miliseconds and represents the requested time between frames.
     /// If the update and render takes longer, then the update for the next frame is started right after the prev one
-    pub fn new(frame_time_milis: u128, render_system: &RenderSystem) -> Self {
+    pub fn new(frame_time_micros: u128, render_system: &RenderSystem) -> Self {
         let time_data = TimeBufferData {
             time: 0.0,
             delta_time: 0.0,
@@ -43,7 +43,7 @@ impl EngineTime {
             frame_count: 0,
             accumulated_time: 0,
             time_since_start: 0,
-            frame_time_milis: frame_time_milis,
+            frame_time_micros,
             time_data: time_data,
             time_buffer: time_buffer,
             last_render_time: std::time::Instant::now(),
@@ -60,16 +60,16 @@ impl EngineTime {
     pub fn update_time(&mut self) -> bool {
         let now = std::time::Instant::now();
         let time_since_last_render = now - self.last_render_time;
-        self.accumulated_time = time_since_last_render.as_millis();
+        self.accumulated_time = time_since_last_render.as_micros();
 
-        if self.accumulated_time >= self.frame_time_milis {
+        if self.accumulated_time >= self.frame_time_micros {
             //println!("Last Frame Time {}", self.accumulated_time);
             self.frame_count += 1;
             self.last_render_time = now;
             self.time_since_start += self.accumulated_time;
 
-            self.time_data.time_millis = self.time_since_start as f32;
-            self.time_data.delta_time_milis = self.accumulated_time as f32;
+            self.time_data.time_millis = self.time_since_start as f32 / 1000.0;
+            self.time_data.delta_time_milis = self.accumulated_time as f32 / 1000.0;
 
             self.time_data.time = self.time_data.time_millis / 1000.0;
             self.time_data.delta_time = self.time_data.delta_time_milis / 1000.0;

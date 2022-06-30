@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, time::SystemTime};
 
 pub use glam;
 pub mod color;
@@ -54,12 +54,17 @@ where
 pub fn render<R: 'static + Runtime>(
     engine: &mut Engine,
     runtime: &mut R,
-) -> Result<(), wgpu::SurfaceError> {
+) -> Result<u128, wgpu::SurfaceError> {
     let output: wgpu::SurfaceTexture = engine
         .render_system
         .render_window
         .surface
         .get_current_texture()?;
+
+    if output.suboptimal{
+        println!("Suboptimal surface!!");
+    }
+    
     let screen_view = output
         .texture
         .create_view(&wgpu::TextureViewDescriptor::default());
@@ -73,6 +78,7 @@ pub fn render<R: 'static + Runtime>(
 
     runtime.render(engine, &screen_view, &mut encoder);
 
+    let gpu_lock_time_start = std::time::Instant::now();
     let mut command_buffers = Vec::<wgpu::CommandBuffer>::new();
     command_buffers.push(encoder.finish());
     engine
@@ -82,13 +88,11 @@ pub fn render<R: 'static + Runtime>(
         .submit(command_buffers);
     output.present();
     
-    //let render_time = std::time::Instant::now();
     let on_gpu_done = engine.render_system.render_window.queue.on_submitted_work_done();
     engine.render_system.render_window.device.poll(wgpu::Maintain::Wait);
     pollster::block_on(on_gpu_done);
-    //println!("Time taken in microseconds {}", (render_time.elapsed()).as_micros());
 
-    Ok(())
+    Ok(gpu_lock_time_start.elapsed().as_micros())
 }
 
 #[derive(Debug)]
@@ -190,33 +194,35 @@ pub fn start_engine_loop<R: 'static + Runtime>(
                         *control_flow = ControlFlow::Exit;
                     };
                     
-                    let operation_time = std::time::Instant::now();
+                    let frame_start_time = std::time::Instant::now();
                     runtime.frame_start(&engine);
-                    engine.operation_time.frame_start_time = operation_time.elapsed().as_secs_f64() * 0.001;
+                    engine.operation_time.frame_start_time = frame_start_time.elapsed().as_micros();
 
                     engine
                         .time
                         .update_buffer(&engine.render_system.render_window.queue);
                     
-                    let operation_time = std::time::Instant::now();
+                    let event_handling_time = std::time::Instant::now();
                     runtime.handle_event_queue(&event_queue, &mut engine, &mut close_app);
-                    engine.operation_time.event_handling_time = operation_time.elapsed().as_secs_f64() * 0.001;
+                    engine.operation_time.event_handling_time = event_handling_time.elapsed().as_micros();
 
                     event_queue.clear();
                     
-                    let operation_time = std::time::Instant::now();
+                    let update_time = std::time::Instant::now();
                     runtime.update(&engine, &mut close_app);
-                    engine.operation_time.update_time = operation_time.elapsed().as_secs_f64() * 0.001;
+                    engine.operation_time.update_time = update_time.elapsed().as_micros();
 
-                    let operation_time = std::time::Instant::now();
+                    let render_time = std::time::Instant::now();
                     let render_result = render(&mut engine, &mut runtime);
-                    engine.operation_time.render_time = operation_time.elapsed().as_secs_f64() * 0.001;
+                    engine.operation_time.render_time = render_time.elapsed().as_micros();
                     
                     match render_result {
-                        Ok(_) => {
+                        Ok(gpu_lock_time) => {
+                            //println!("GPU LOCK TIME {}", gpu_lock_time * 1000.0);
+                            engine.operation_time.gpu_lock_time = gpu_lock_time;
                             let operation_time = std::time::Instant::now();
                             runtime.frame_end(&mut engine,&mut close_app);
-                            engine.operation_time.frame_end_time = operation_time.elapsed().as_secs_f64() * 0.001;
+                            engine.operation_time.frame_end_time = operation_time.elapsed().as_micros();
                         }
                         // Reconfigure the surface if lost
                         Err(wgpu::SurfaceError::Lost) => engine.render_system.configure_surface(),

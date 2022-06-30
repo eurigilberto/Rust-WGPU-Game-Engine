@@ -1,20 +1,16 @@
+#[derive(Default)]
 pub struct OperationTime {
-    pub frame_start_time: f64,
-    pub event_handling_time: f64,
-    pub update_time: f64,
-    pub render_time: f64,
-	pub frame_end_time: f64
+    pub frame_start_time: u128,
+    pub event_handling_time: u128,
+    pub update_time: u128,
+    pub render_time: u128,
+	pub frame_end_time: u128,
+	pub gpu_lock_time: u128,
 }
 
 impl OperationTime {
     pub fn new() -> Self {
-        Self {
-            frame_start_time: 0.0,
-            event_handling_time: 0.0,
-            update_time: 0.0,
-            render_time: 0.0,
-			frame_end_time: 0.0
-        }
+        Self::default()
     }
 
 	pub fn copy_from(&mut self, other: &Self){
@@ -23,9 +19,11 @@ impl OperationTime {
 		self.update_time = other.update_time;
 		self.render_time = other.render_time;
 		self.frame_end_time = other.frame_end_time;
+		self.gpu_lock_time = other.gpu_lock_time;
 	}
 
-	pub fn get_total_time(&self) -> f64{
-		self.frame_start_time + self. event_handling_time + self.update_time + self.render_time + self.frame_end_time
+	pub fn get_total_time(&self) -> u128{
+		let time =(self.frame_start_time + self.event_handling_time + self.update_time + self.render_time + self.frame_end_time);
+		time
 	}
 }

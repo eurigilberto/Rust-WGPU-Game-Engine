@@ -13,7 +13,7 @@ pub struct FontElement {
 }
 
 //Font layout system
-pub fn create_font_layout(
+pub fn create_single_line(
     text: &str,
     font_size: f32,
     font_col: &FontCollection,
