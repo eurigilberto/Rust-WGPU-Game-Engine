@@ -14,7 +14,7 @@ use super::{
     font_load_gpu::{CharIndices, CharTextureSlice, FontCollection},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct FontElement {
     pub rect: Rect,
     pub tx_slice: TextureSlice,
