@@ -72,12 +72,13 @@ impl Into<[f32; 4]> for BorderRadius {
     }
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Rect {
     pub position: Vec2,
     pub size: Vec2,
 }
 
+#[derive(Debug)]
 pub struct RectBounds {
     pub max: Vec2,
     pub min: Vec2,
@@ -109,6 +110,11 @@ impl Rect {
 
     pub fn offset_size(mut self, offset: Vec2) -> Self {
         self.size += offset;
+        self
+    }
+
+    pub fn mul_size(mut self, mul: Vec2) -> Self{
+        self.size *= mul;
         self
     }
 

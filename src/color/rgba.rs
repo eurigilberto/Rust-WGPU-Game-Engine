@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use crate::color::hsla::HSLA;
+use crate::{color::hsla::HSLA, math_utils::lerp_f32};
 
 pub enum RGBElems {
     R,
@@ -24,6 +24,14 @@ impl RGBA {
             g: rand::random(),
             b: rand::random(),
             a: 1.0,
+        }
+    }
+    pub fn lerp_rgba(&self, other: &Self, param: f32) -> Self {
+        Self {
+            r: lerp_f32(self.r, other.r, param),
+            g: lerp_f32(self.g, other.g, param),
+            b: lerp_f32(self.b, other.b, param),
+            a: lerp_f32(self.a, other.a, param),
         }
     }
     pub const fn new(r: f32, g: f32, b: f32, a: f32) -> Self {

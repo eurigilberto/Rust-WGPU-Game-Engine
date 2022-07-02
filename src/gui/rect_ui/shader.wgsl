@@ -338,7 +338,7 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 		}
 		else if(mask_type == 4u){//SDF mask
 			let grad = length(fwidth_mask_data * 64.0);//64 is a magic number
-			let pixel_dist = (sample) / grad;
+			let pixel_dist = (sample * 2.0) / grad;
 			mask = clamp(0.5-pixel_dist, 0.0, 1.0);
 		}
 	}
