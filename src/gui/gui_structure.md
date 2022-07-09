@@ -130,3 +130,31 @@ ___
 # LINE RENDERER
 
 Optimized to render lines using triangles
+
+`
+var offset_list = array<vec2<f32>,4>(
+	vec2<f32>(0.5, 0.5),
+	vec2<f32>(-0.5, 0.5),
+	vec2<f32>(0.5, -0.5),
+	vec2<f32>(-0.5, -0.5)
+);
+
+var sample = 0.0;
+
+for (var i = 0; i < 4; i = i + 1) {
+	let off_v = offset_list[u32(i)];
+	let tx_size = 1.0 / 1024.0;
+	let sampled_pixel = textureSampleLevel(texture_atlas, texture_atlas_sampler, mask_texture_position + off_v * vec2<f32>(tx_size, tx_size), 
+		i32(array_index), 0.0, vec2<i32>(0, 0));
+	sample = sample + sampled_pixel[sample_component];
+}
+
+if(mask_type == 3u){//Texture mask
+	mask = clamp(sample, 0.0, 1.0);
+}
+else if(mask_type == 4u){//SDF mask
+	let grad = length(fwidth_mask_data * 64.0);//64 is a magic number
+	let pixel_dist = (sample) / grad;
+	mask = clamp(0.5-pixel_dist, 0.0, 1.0);
+}
+`

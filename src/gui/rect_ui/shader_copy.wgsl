@@ -5,67 +5,67 @@ struct SystemData{
     //delta_time
     //time_milis
     //delta_time_milis
-	time_data: vec4<f32>;
-};
-[[group(0), binding(0)]]
+	time_data: vec4<f32>,
+}
+@group(0) @binding(0)
 var<uniform> global_ui_data: SystemData;
 
 struct GUIRenderpassData{
 	screen_size: vec4<f32>;
-};
-[[group(1), binding(0)]]
+}
+@group(1) @binding(0)
 var<uniform> gui_render_pass_data: GUIRenderpassData;
 
 struct VecFloatStorage{
-	data: array<vec4<f32>>;
-};
+	data: array<vec4<f32>>,
+}
 struct VecUIntStorage{
-	data: array<vec4<u32>>;
-};
-[[group(2), binding(0)]]
+	data: array<vec4<u32>>,
+}
+@group(2) @binding(0)
 var<storage> rect_mask: VecFloatStorage;
-[[group(2), binding(1)]]
+@group(2) @binding(1)
 var<storage> border_radius: VecFloatStorage;
-[[group(2), binding(2)]]
+@group(2) @binding(2)
 var<storage> texture_position: VecUIntStorage;
-[[group(2), binding(3)]]
+@group(2) @binding(3)
 var<storage> color: VecFloatStorage;
 
-[[group(3), binding(0)]]
+@group(3) @binding(0)
 var texture_atlas: texture_2d_array<f32>;
-[[group(3), binding(1)]]
+@group(3) @binding(1)
 var texture_atlas_sampler: sampler;
 
 // Vertex shader
 struct VertexOutput {
-	[[location(0)]] vert_position: vec2<f32>;
-	[[location(1)]] vert_px_position: vec2<f32>;
-	[[location(2)]] texture_position: vec2<f32>;
+	@location(0) vert_position: vec2<f32>,
+	@location(1) vert_px_position: vec2<f32>,
+	@location(2) texture_position: vec2<f32>,
 	
 	//Instance data
-	[[location(3)]] size: vec2<f32>;
-	[[location(4)]] color: vec4<f32>;
-	[[location(5)]] mask: vec4<f32>;
-	[[location(6)]] border_radius: vec4<f32>;
+	@location(3) size: vec2<f32>,
+	@location(4) color: vec4<f32>,
+	@location(5) mask: vec4<f32>,
+	@location(6) border_radius: vec4<f32>,
 
-	[[location(7)]] data_vector_0: vec4<u32>;
-	[[location(8)]] data_vector_1: vec4<u32>;
+	@location(7) data_vector_0: vec4<u32>,
+	@location(8) data_vector_1: vec4<u32>,
 
 	//[[location(9)]] test_u32: u32;
 
 	//Required built in
-    [[builtin(position)]] clip_position: vec4<f32>;
-};
+    @builtin(position) clip_position: vec4<f32>,
+}
 
-[[stage(vertex)]]
+@vertex
 fn vs_main(
-    [[builtin(vertex_index)]] in_vertex_index: u32,
-	[[builtin(instance_index)]] in_instance_index: u32, 
+    @builtin(vertex_index) in_vertex_index: u32,
+	@builtin(instance_index) in_instance_index: u32, 
 	
 	//provided in normalized screen space
-	[[location(0)]] position_size: vec4<u32>,
-	[[location(1)]] data_vector_0: vec4<u32>,
-	[[location(2)]] data_vector_1: vec4<u32>,
+	@location(0) position_size: vec4<u32>,
+	@location(1) data_vector_0: vec4<u32>,
+	@location(2) data_vector_1: vec4<u32>,
 ) -> VertexOutput {
 	var out: VertexOutput;
 	
@@ -182,11 +182,11 @@ fn sd_rounded_box(p: vec2<f32>, b: vec2<f32>, r: vec4<f32>) -> f32{
 }
 
 struct FragmentOutput {
-	[[location(0)]] main_color: vec4<f32>;
-	[[location(1)]] ui_mask: u32;
-};
+	@location(0) main_color: vec4<f32>,
+	@location(1) ui_mask: u32,
+}
 
-[[stage(fragment)]]
+@fragment
 fn fs_main(in: VertexOutput) -> FragmentOutput {
 	var out: FragmentOutput;
 

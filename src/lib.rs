@@ -87,10 +87,8 @@ pub fn render<R: 'static + Runtime>(
         .queue
         .submit(command_buffers);
     output.present();
-    
-    let on_gpu_done = engine.render_system.render_window.queue.on_submitted_work_done();
     engine.render_system.render_window.device.poll(wgpu::Maintain::Wait);
-    pollster::block_on(on_gpu_done);
+    //pollster::block_on(on_gpu_done);
 
     Ok(gpu_lock_time_start.elapsed().as_micros())
 }

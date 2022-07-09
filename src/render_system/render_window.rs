@@ -39,7 +39,7 @@ impl RenderWindow {
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: surface.get_preferred_format(&adapter).expect("Could not get prefered format"),
+            format: surface.get_supported_formats(&adapter)[0],
             width: size.x,
             height: size.y,
             present_mode: wgpu::PresentMode::Immediate,

@@ -5,58 +5,59 @@ struct SystemData{
     //delta_time
     //time_milis
     //delta_time_milis
-	time_data: vec4<f32>;
-};
-[[group(0), binding(0)]]
+	time_data: vec4<f32>,
+}
+@group(0) @binding(0)
 var<uniform> global_ui_data: SystemData;
 
 struct GUIRenderpassData{
-	screen_size: vec4<f32>;
-};
-[[group(1), binding(0)]]
+	screen_size: vec4<f32>,
+}
+@group(1) @binding(0)
 var<uniform> gui_render_pass_data: GUIRenderpassData;
 
 struct VecFloatStorage{
-	data: array<vec4<f32>>;
-};
+	data: array<vec4<f32>>,
+}
 struct VecUIntStorage{
-	data: array<vec4<u32>>;
-};
-[[group(2), binding(0)]]
+	data: array<vec4<u32>>,
+}
+
+@group(2) @binding(0)
 var<storage> rect_mask: VecFloatStorage;
-[[group(2), binding(1)]]
+@group(2) @binding(1)
 var<storage> border_radius: VecFloatStorage;
-[[group(2), binding(2)]]
+@group(2) @binding(2)
 var<storage> texture_position: VecUIntStorage;
-[[group(2), binding(3)]]
+@group(2) @binding(3)
 var<storage> color: VecFloatStorage;
 
-[[group(3), binding(0)]]
+@group(3) @binding(0)
 var texture_atlas: texture_2d_array<f32>;
-[[group(3), binding(1)]]
+@group(3) @binding(1)
 var texture_atlas_sampler: sampler;
 
 // Vertex shader
 struct VertexOutput {
-	[[location(0)]] vert_position: vec2<f32>;
-	[[location(1)]] vert_px_position: vec2<f32>;
+	@location(0) vert_position: vec2<f32>,
+	@location(1) vert_px_position: vec2<f32>,
 
 	//it could be a texture position changing per vertex or the border radius
-	[[location(2)]] masking_data: vec4<f32>;
+	@location(2) masking_data: vec4<f32>,
 	//it could be a color, the texture position changing per vertex,
 	//the start - end position of the linear gradient,
 	//or the center position and radius of a radial gradient
-	[[location(3)]] coloring_data: vec4<f32>;
+	@location(3) coloring_data: vec4<f32>,
 	
 	//Instance data
-	[[location(4), interpolate(flat)]] half_size: vec2<f32>;
-	[[location(5), interpolate(flat)]] mask: vec4<f32>;
+	@location(4) @interpolate(flat) half_size: vec2<f32>,
+	@location(5) @interpolate(flat) mask: vec4<f32>,
 
 	// x - mask type
 	// y - color type
 	// z - border color index
 	// w - border size
-	[[location(6), interpolate(flat)]] data_vector_0: vec4<u32>;
+	@location(6) @interpolate(flat) data_vector_0: vec4<u32>,
 
 	// if mask type requires a texture
 	// x - array index | y - sample component
@@ -64,23 +65,23 @@ struct VertexOutput {
 	// z - array index | w - sample component
 	// if coloring type is gradient
 	// z - color data index
-	[[location(7), interpolate(flat)]] texture_extra_data: vec4<u32>;
+	@location(7) @interpolate(flat) texture_extra_data: vec4<u32>,
 
-	[[location(8)]] border_color: vec4<f32>;
+	@location(8) border_color: vec4<f32>,
 
 	//Required built in
-    [[builtin(position)]] clip_position: vec4<f32>;
+    @builtin(position) clip_position: vec4<f32>,
 };
 
-[[stage(vertex)]]
+@vertex
 fn vs_main(
-    [[builtin(vertex_index)]] in_vertex_index: u32,
-	[[builtin(instance_index)]] in_instance_index: u32, 
+    @builtin(vertex_index) in_vertex_index: u32,
+	@builtin(instance_index) in_instance_index: u32, 
 	
 	//provided in normalized screen space
-	[[location(0)]] position_size: vec4<f32>,
-	[[location(1)]] data_vector_0: vec4<u32>,
-	[[location(2)]] data_vector_1: vec4<f32>,
+	@location(0) position_size: vec4<f32>,
+	@location(1) data_vector_0: vec4<u32>,
+	@location(2) data_vector_1: vec4<f32>,
 ) -> VertexOutput {
 	var out: VertexOutput;
 	
@@ -240,11 +241,11 @@ fn sd_rounded_box(p: vec2<f32>, b: vec2<f32>, r: vec4<f32>) -> f32{
 }
 
 struct FragmentOutput {
-	[[location(0)]] main_color: vec4<f32>;
-	[[location(1)]] ui_mask: u32;
-};
+	@location(0) main_color: vec4<f32>,
+	@location(1) ui_mask: u32,
+}
 
-[[stage(fragment)]]
+@fragment
 fn fs_main(in: VertexOutput) -> FragmentOutput {
 	var out: FragmentOutput;
 
@@ -331,14 +332,14 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 		let sample_component = in.texture_extra_data.y;
 		let sampled_pixel = textureSampleLevel(texture_atlas, texture_atlas_sampler, mask_texture_position, 
 			i32(array_index), 0.0, vec2<i32>(0, 0));
-		let sample = sampled_pixel[sample_component];
+		let c_sample = sampled_pixel[sample_component];
 
 		if(mask_type == 3u){//Texture mask
-			mask = clamp(sample, 0.0, 1.0);
+			mask = clamp(c_sample, 0.0, 1.0);
 		}
 		else if(mask_type == 4u){//SDF mask
 			let grad = length(fwidth_mask_data * 64.0);//64 is a magic number
-			let pixel_dist = (sample * 2.0) / grad;
+			let pixel_dist = (c_sample) / grad;
 			mask = clamp(0.5-pixel_dist, 0.0, 1.0);
 		}
 	}

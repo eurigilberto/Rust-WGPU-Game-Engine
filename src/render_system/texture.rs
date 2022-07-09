@@ -49,14 +49,14 @@ pub fn clear_render_targets(
 ) {
     let render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
         label: Some("Clear Operation"),
-        color_attachments: &[wgpu::RenderPassColorAttachment {
+        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
             view: &render_texture,
             resolve_target: None,
             ops: wgpu::Operations {
                 load: wgpu::LoadOp::Clear(clear_color),
                 store: true,
             },
-        }],
+        })],
         depth_stencil_attachment: match depth_texture {
             Some(texture_view) => {
                 Some(wgpu::RenderPassDepthStencilAttachment{

@@ -119,7 +119,7 @@ pub fn create_multi_line(
     line_width: f32,
     line_height: f32,
     paragraph_separation: f32,
-) -> (Vec<FontElement>, Vec<WordRect>, f32) {
+) -> (Vec<FontElement>, Vec<WordRect>, f32, f32) {
     let character_map = &font_col.characters_hasmap[collection_index];
     let character_slices = &font_col.char_texture_slices[collection_index];
     let character_data = &font_col.fonts_characters[collection_index];
@@ -152,6 +152,7 @@ pub fn create_multi_line(
 
     let mut current_cursor = Vec2::ZERO;
     let mut word_font_elements = Vec::<FontElement>::with_capacity(20);
+    let mut first_line_height = None;
     for paragraphs in text.split('\n') {
         for (index, words) in paragraphs.split(' ').into_iter().enumerate() {
             let mut h_pos = 0.0;
@@ -192,7 +193,10 @@ pub fn create_multi_line(
             if index != 0 && line_width < current_cursor.x + h_pos {
                 //The word does not fit in the current line
                 current_cursor.x = 0.0;
-                current_cursor.y -= line_height
+                current_cursor.y -= line_height;
+                if first_line_height.is_none() {
+                    first_line_height = Some(height);
+                }
             }
 
             //Using the current cursor, offset the font elements
@@ -216,5 +220,8 @@ pub fn create_multi_line(
         current_cursor.x = 0.0;
         current_cursor.y -= paragraph_separation;
     }
-    (text_elements, word_elements, f32::abs(current_cursor.y))
+    if first_line_height.is_none() {
+        panic!("It seems no line could be created")
+    }
+    (text_elements, word_elements, f32::abs(current_cursor.y), first_line_height.unwrap())
 }

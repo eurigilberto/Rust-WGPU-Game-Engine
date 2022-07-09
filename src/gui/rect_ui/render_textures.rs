@@ -4,18 +4,18 @@ use crate::render_system::render_texture::RenderTexture;
 use crate::render_system::RenderSystem;
 use glam::{uvec2, vec2};
 
-pub fn get_color_target_states() -> [wgpu::ColorTargetState; 2] {
+pub fn get_color_target_states() -> [Option<wgpu::ColorTargetState>; 2] {
     [
-        wgpu::ColorTargetState {
+        Some(wgpu::ColorTargetState {
             blend: Some(wgpu::BlendState::ALPHA_BLENDING),
             format: wgpu::TextureFormat::Rgba16Float,
             write_mask: wgpu::ColorWrites::all(),
-        },
-        wgpu::ColorTargetState {
+        }),
+        Some(wgpu::ColorTargetState {
             blend: None,
             format: wgpu::TextureFormat::R16Uint,
             write_mask: wgpu::ColorWrites::all(),
-        },
+        }),
     ]
 }
 

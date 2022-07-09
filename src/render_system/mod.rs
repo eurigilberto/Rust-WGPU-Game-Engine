@@ -24,6 +24,7 @@ pub fn uniform_usage() -> wgpu::BufferUsages {
 
 pub enum TextureSamplerType {
     LinearClampToEdge,
+    ClampToEdge
 }
 
 impl RenderSystem {
@@ -89,7 +90,7 @@ impl RenderSystem {
     ) -> wgpu::ShaderModule {
         self.render_window
             .device
-            .create_shader_module(&wgpu::ShaderModuleDescriptor {
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: Some(shader_name),
                 source: wgpu::ShaderSource::Wgsl(shader_str),
             })
@@ -101,7 +102,7 @@ impl RenderSystem {
         vertex_entry_point: &'a str,
         vertex_buffer_layouts: &'a [VertexBufferLayout],
         fragment_entry_point: &'a str,
-        color_target_states: &'a [ColorTargetState],
+        color_target_states: &'a [Option<ColorTargetState>],
     ) -> (wgpu::VertexState<'a>, wgpu::FragmentState<'a>) {
         let vertex_state = wgpu::VertexState {
             module: shader_module,
@@ -139,6 +140,16 @@ impl RenderSystem {
                     .device
                     .create_sampler(&sampler_descriptor)
             }
+            TextureSamplerType::ClampToEdge => {
+                texture::set_all_address_mode(
+                    &mut sampler_descriptor,
+                    wgpu::AddressMode::ClampToEdge,
+                );
+                self.render_window
+                    .device
+                    .create_sampler(&sampler_descriptor)
+            },
+            
         }
     }
 

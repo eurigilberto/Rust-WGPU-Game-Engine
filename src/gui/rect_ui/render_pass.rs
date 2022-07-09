@@ -12,7 +12,7 @@ fn create_render_pass<'a>(
     encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
         label: Some("GUI Render Pass"),
         color_attachments: &[
-            wgpu::RenderPassColorAttachment {
+            Some(wgpu::RenderPassColorAttachment {
                 resolve_target: None,
                 view: color_texture_view,
                 ops: wgpu::Operations {
@@ -21,8 +21,8 @@ fn create_render_pass<'a>(
                     }),
                     store: true,
                 },
-            },
-            wgpu::RenderPassColorAttachment {
+            }),
+            Some(wgpu::RenderPassColorAttachment {
                 resolve_target: None,
                 view: mask_texture_view,
                 ops: wgpu::Operations {
@@ -31,7 +31,7 @@ fn create_render_pass<'a>(
                     }),
                     store: true,
                 },
-            },
+            }),
         ],
         depth_stencil_attachment: None,
     })
