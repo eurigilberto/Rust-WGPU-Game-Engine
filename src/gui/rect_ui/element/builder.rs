@@ -40,6 +40,7 @@ pub struct ElementBuilder {
     rect_mask: Option<ExtraBufferData<Rect>>,
     mask_type: MaskType,
     coloring_type: ColoringType,
+    ui_mask: u16
 }
 
 impl ElementBuilder {
@@ -53,6 +54,7 @@ impl ElementBuilder {
             rect_mask: None,
             mask_type,
             coloring_type,
+            ui_mask: 0
         }
     }
 
@@ -126,6 +128,11 @@ impl ElementBuilder {
         self
     }
 
+    pub fn set_ui_mask(mut self, value: u16) -> Self{
+        self.ui_mask = value;
+        self
+    }
+
     pub fn build(mut self, gui_rects: &mut GUIRects) {
         if let None = self.rect_mask{
             self.rect_mask = Some(Rect{
@@ -141,6 +148,7 @@ impl ElementBuilder {
             self.rect_mask.unwrap(),
             &self.mask_type,
             &self.coloring_type,
+            self.ui_mask
         );
     }
 }

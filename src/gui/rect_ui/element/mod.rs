@@ -126,6 +126,8 @@ pub struct Element {
     pub border_size: u16,
 
     // data vector 0 - 3 - W - EMPTY
+    //--- nothing
+    pub ui_mask: u16,
 
     // data vector 1 - 0 - X
     pub rotation: f32,
@@ -333,12 +335,14 @@ pub fn create_new_rect_element(
     rect_mask: ExtraBufferData<Rect>,
     mask_type: &MaskType,
     coloring_type: &ColoringType,
+    ui_mask: u16
 ) -> Element {
     let mut element = Element::default();
 
     element.position = position;
     element.size = size;
     element.rotation = rotation;
+    element.ui_mask = ui_mask;
 
     match rect_mask {
         ExtraBufferData::NewData(rect_mask) => {
@@ -375,7 +379,7 @@ fn push_element_data(gui_rects: &mut GUIRects, element: &Element) {
                     | (element.rect_mask_index as u32),
                 (element.mask_data_index as u32) << 16 | (element.coloring_data_index as u32),
                 (element.border_color_index as u32) << 16 | (element.border_size as u32),
-                0,
+                element.ui_mask as u32,
             ],
             data_vector_1: [element.rotation, 0.0, 0.0, 0.0],
         });

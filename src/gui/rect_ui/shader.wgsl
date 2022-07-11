@@ -68,6 +68,7 @@ struct VertexOutput {
 	@location(7) @interpolate(flat) texture_extra_data: vec4<u32>,
 
 	@location(8) border_color: vec4<f32>,
+	@location(9) @interpolate(flat) ui_mask: u32,
 
 	//Required built in
     @builtin(position) clip_position: vec4<f32>,
@@ -143,6 +144,9 @@ fn vs_main(
 	let border_color_index = data_vector_0.z >> 16u;
 	let border_size = data_vector_0.z & 0x0000ffffu;
 
+	let ui_mask = data_vector_0.w & 0x0000ffffu;
+
+	out.ui_mask = ui_mask;
 	out.half_size = rect_px_size * 0.5;
 	out.mask = rect_mask.data[rect_mask_index];
 	out.texture_extra_data = vec4<u32>(0u,0u,0u,0u);
@@ -344,6 +348,10 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 		}
 	}
 
+	if(step(0.05, mask) < 0.5){
+		discard;
+	}
+
 	let coloring_texture_position = vec2<f32>(in.coloring_data.x, in.coloring_data.y);
 	var main_color = vec4<f32>(1.0,1.0,1.0,1.0);
 	if(coloring_type == 0u){
@@ -389,17 +397,18 @@ fn fs_main(in: VertexOutput) -> FragmentOutput {
 	}
 
 	let final_color = mix(main_color, in.border_color, border_mask);
+	
+	if(step(0.05, final_color.w) < 0.5){
+		discard;
+	}
+	
 	out.main_color = vec4<f32>(final_color.x, final_color.y, final_color.z, final_color.w * mask);
+	out.ui_mask = in.ui_mask;
 
 	// Background debugging, just in case something does not make sense
 	//let main_color_w_bg = mix(vec4<f32>(1.0,0.0,0.0,1.0), main_color, main_color.w * mask);
 	//out.main_color = main_color_w_bg;
-	
-	// var ui_mask = u32(0);
-	// if(step(0.1, mask) > 0.5){
-	// 	ui_mask = texture_mask;
-	// }
-	out.ui_mask = 5u;
+	//out.ui_mask = 0;
 
 	return out;
 }
