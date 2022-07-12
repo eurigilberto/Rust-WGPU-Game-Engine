@@ -8,12 +8,12 @@ pub fn get_color_target_states() -> [Option<wgpu::ColorTargetState>; 2] {
     [
         Some(wgpu::ColorTargetState {
             blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-            format: wgpu::TextureFormat::Rgba16Float,
+            format: wgpu::TextureFormat::Rgba8Unorm,
             write_mask: wgpu::ColorWrites::all(),
         }),
         Some(wgpu::ColorTargetState {
             blend: None,
-            format: wgpu::TextureFormat::R16Uint,
+            format: wgpu::TextureFormat::R8Uint,
             write_mask: wgpu::ColorWrites::all(),
         }),
     ]
@@ -32,7 +32,7 @@ impl GUIRenderTexture {
         render_texture_slotmap: &mut Slotmap<RenderTexture>,
     ) -> Self {
         let color_texture = RenderTexture::create_and_store(
-            wgpu::TextureFormat::Rgba16Float,
+            wgpu::TextureFormat::Rgba8Unorm,
             uvec2(width, height),
             render_system,
             "GUI Color Texture",
@@ -41,7 +41,7 @@ impl GUIRenderTexture {
         );
 
         let mask_texture = RenderTexture::create_and_store(
-            wgpu::TextureFormat::R16Uint,
+            wgpu::TextureFormat::R8Uint,
             uvec2(width, height),
             render_system,
             "GUI Mask Texture",
