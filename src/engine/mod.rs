@@ -17,9 +17,9 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub fn new(window: &Window) -> Self {
+    pub fn new(window: &Window, frame_time_micros: u128) -> Self {
         let render_system = pollster::block_on(render_system::RenderSystem::new(&window));
-        let engine_time = engine_time::EngineTime::new(50, &render_system);
+        let engine_time = engine_time::EngineTime::new(frame_time_micros, &render_system);
 
         let system_bind_group_layout = render_system.render_window.device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {

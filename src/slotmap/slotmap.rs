@@ -45,7 +45,7 @@ pub struct Slotmap<V> {
 }
 
 impl<V> Slotmap<V> {
-    pub fn new_with_capacity(capacity: usize) -> Self {
+    pub fn with_capacity(capacity: usize) -> Self {
         let values = Vec::<V>::with_capacity(capacity);
         let values_slot = Vec::<SlotIndex>::with_capacity(capacity);
         let slots = vec![

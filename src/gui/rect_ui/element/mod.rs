@@ -173,9 +173,7 @@ pub fn add_texture_slice(
     }
 }
 
-pub fn mod_gl(a: f32, b: f32) -> f32 {
-    a - b * f32::floor(a / b)
-}
+
 
 pub fn add_mask_type_data(mask_type: &MaskType, element: &mut Element, gui_rects: &mut GUIRects) {
     match mask_type {

@@ -4,7 +4,7 @@ mod tests {
 
     #[test]
     fn single_value_can_be_pushed_into_empty_slotmap() {
-        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut u32_slotmap = Slotmap::<u32>::with_capacity(100);
         let new_value_key = u32_slotmap.push(20);
         match new_value_key {
             Some(_) => {
@@ -21,7 +21,7 @@ mod tests {
     }
     #[test]
     fn multiple_values_can_be_pushed_into_empty_slotmap() {
-        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut u32_slotmap = Slotmap::<u32>::with_capacity(100);
         for i in 0..25 {
             match u32_slotmap.push(i) {
                 Some(_) => {}
@@ -40,7 +40,7 @@ mod tests {
     }
     #[test]
     fn removing_a_value_from_partially_filled_slotmap_frees_a_slot() {
-        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut u32_slotmap = Slotmap::<u32>::with_capacity(100);
         let mut slot_keys = Vec::<SlotKey>::with_capacity(25);
         for i in 0..24 {
             if let Some(key) = u32_slotmap.push(i) {
@@ -71,7 +71,7 @@ mod tests {
     }
     #[test]
 	fn removing_multiple_values_from_partially_filled_slotmap_frees_multiple_slots() {
-        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut u32_slotmap = Slotmap::<u32>::with_capacity(100);
         let mut slot_keys = Vec::<SlotKey>::with_capacity(25);
         for i in 0..24 {
             if let Some(key) = u32_slotmap.push(i) {
@@ -102,7 +102,7 @@ mod tests {
     }
 	#[test]
 	fn removing_multiple_values_randomly_from_partially_filled_slotmap_frees_multiple_slots(){
-		let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+		let mut u32_slotmap = Slotmap::<u32>::with_capacity(100);
         let mut slot_keys = Vec::<(u32, SlotKey)>::with_capacity(25);
         for i in 0..24 {
             if let Some(key) = u32_slotmap.push(i) {
@@ -138,7 +138,7 @@ mod tests {
 	}
     #[test]
     fn removing_multiple_values_can_make_free_buckets_to_merge_on_a_partially_filled_slotmap(){
-        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut u32_slotmap = Slotmap::<u32>::with_capacity(100);
         let mut slot_keys = Vec::<SlotKey>::with_capacity(25);
         for i in 0..24 {
             if let Some(key) = u32_slotmap.push(i) {
@@ -173,7 +173,7 @@ mod tests {
     }
     #[test]
     fn an_iterator_can_be_created_from_a_partially_filled_slotmap(){
-        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut u32_slotmap = Slotmap::<u32>::with_capacity(100);
         let mut slot_keys = Vec::<SlotKey>::with_capacity(25);
         for i in 0..24 {
             if let Some(key) = u32_slotmap.push(i) {
@@ -191,7 +191,7 @@ mod tests {
     }
     #[test]
     fn a_mutable_iterator_can_be_created_from_a_partially_filled_slotmap(){
-        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut u32_slotmap = Slotmap::<u32>::with_capacity(100);
         let mut slot_keys = Vec::<SlotKey>::with_capacity(25);
         for i in 0..24 {
             if let Some(key) = u32_slotmap.push(i) {
@@ -216,7 +216,7 @@ mod tests {
 
     #[test]
     fn values_cannot_be_pushed_to_slotmaps_at_capacity(){
-        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut u32_slotmap = Slotmap::<u32>::with_capacity(100);
         for i in 0..100 {
             if let Some(_) = u32_slotmap.push(i) {
             } else {
@@ -232,7 +232,7 @@ mod tests {
 
     #[test]
     fn capacity_of_a_full_slotmap_can_be_increased(){
-        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut u32_slotmap = Slotmap::<u32>::with_capacity(100);
         for i in 0..100 {
             if let Some(_) = u32_slotmap.push(i) {
             } else {
@@ -257,7 +257,7 @@ mod tests {
 
     #[test]
     fn when_the_capacity_is_increased_the_resulting_bucket_is_merged_with_the_current_tail_if_possible(){
-        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut u32_slotmap = Slotmap::<u32>::with_capacity(100);
         for i in 0..90 {
             if let Some(_) = u32_slotmap.push(i) {
             } else {
@@ -290,7 +290,7 @@ mod tests {
 
     #[test]
     fn new_capacity_bucket_is_not_merged_if_the_tail_bucket_is_not_connected_to_it(){
-        let mut u32_slotmap = Slotmap::<u32>::new_with_capacity(100);
+        let mut u32_slotmap = Slotmap::<u32>::with_capacity(100);
         let mut slot_keys = Vec::<SlotKey>::with_capacity(100);
         for i in 0..100 {
             if let Some(key) = u32_slotmap.push(i) {
