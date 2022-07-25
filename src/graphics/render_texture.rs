@@ -1,6 +1,6 @@
 use crate::{
-    render_system::{texture, RenderSystem},
-    slotmap::slotmap::{Slotmap, SlotKey},
+    graphics::{texture, Graphics},
+    slotmap::{Slotmap, SlotKey},
 };
 use glam::{UVec2, Vec2};
 
@@ -18,7 +18,7 @@ impl RenderTexture {
     pub fn new(
         format: wgpu::TextureFormat,
         size: UVec2,
-        render_system: &RenderSystem,
+        graphics: &Graphics,
 
         texture_name: &str,
         texture_view_name: &str
@@ -34,7 +34,7 @@ impl RenderTexture {
             ..Default::default()
         };
 
-        let texture = render_system.create_texture(&texture_descriptor);
+        let texture = graphics.device.create_texture(&texture_descriptor);
 
         let texture_view = texture.create_view(&texture_view_descriptor);
 
@@ -51,7 +51,7 @@ impl RenderTexture {
     pub fn create_and_store(
         format: wgpu::TextureFormat,
         size: UVec2,
-        render_system: &RenderSystem,
+        render_system: &Graphics,
 
         texture_name: &str,
         texture_view_name: &str,
@@ -77,15 +77,15 @@ impl RenderTexture {
         }
     }
 
-    pub fn resize_texture(&mut self, new_size: UVec2, render_system: &RenderSystem) {
+    pub fn resize_texture(&mut self, new_size: UVec2, graphics: &Graphics) {
         let texture_descriptor = texture::create_render_texture_descriptor(
             self.format,
             new_size.x,
             new_size.y,
             Some(self.texture_name.as_str()),
         );
-        let destroyed_texture = std::mem::replace(&mut self.texture, render_system.create_texture(&texture_descriptor));
-        render_system.queue_destroy_texture(destroyed_texture);
+        let destroyed_texture = std::mem::replace(&mut self.texture, graphics.device.create_texture(&texture_descriptor));
+        graphics.queue_destroy_texture(destroyed_texture);
 
         let texture_view_descriptor = self.get_texture_view_descriptor();
         self.texture_view = self.texture.create_view(&texture_view_descriptor);

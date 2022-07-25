@@ -1,39 +1,66 @@
-mod render_window;
+mod render_surface;
 use std::{borrow::Cow, cell::RefCell};
 
 pub mod render_texture;
 pub mod texture;
 use glam::{uvec2, UVec2};
-use render_window::RenderWindow;
+use render_surface::RenderSurface;
 use wgpu::{util::DeviceExt, ColorTargetState, VertexBufferLayout};
 use winit::event::WindowEvent;
 
 use crate::EngineEvent;
 pub mod copy_texture_to_surface;
-pub struct RenderSystem {
-    pub render_window: RenderWindow,
-    
+pub struct Graphics {
+    pub render_window: RenderSurface,
+    pub device: wgpu::Device,
+    pub queue: wgpu::Queue,
     /// It is a refcell because I don't want to give out mutable references to the entire render system
     /// just because I need a mutable reference to be able to add / consume the destroy texture queue
     destroy_texture_queue: RefCell<Vec<wgpu::Texture>>,
 }
 
-pub fn uniform_usage() -> wgpu::BufferUsages {
-    wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST
-}
-
 pub enum TextureSamplerType {
     LinearClampToEdge,
-    ClampToEdge
+    ClampToEdge,
 }
 
-impl RenderSystem {
+impl Graphics {
     pub async fn new(window: &winit::window::Window) -> Self {
-        let render_window = RenderWindow::new(window).await;
+        // The instance is a handle to our GPU
+        // Backends::all => Vulkan + Metal + DX12 + Browser WebGPU
+        let instance = wgpu::Instance::new(wgpu::Backends::all());
+        let surface = unsafe { instance.create_surface(window) };
+        let adapter = instance
+            .request_adapter(&wgpu::RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::HighPerformance,
+                compatible_surface: Some(&surface),
+                force_fallback_adapter: false,
+            })
+            .await
+            .expect("Adapter could not be created on Render Window");
+
+        let (device, queue) = adapter
+            .request_device(
+                &wgpu::DeviceDescriptor {
+                    features: wgpu::Features::empty(),
+                    limits: wgpu::Limits::default(),
+                    label: None,
+                },
+                None, // Trace path
+            )
+            .await
+            .expect("Device and Queue could not be created");
+
+        let size = uvec2(window.inner_size().width, window.inner_size().height);
+        let format = surface.get_supported_formats(&adapter)[0];
+        let render_window = RenderSurface::new(surface, &device, size, format).await;
         let destroy_texture_queue = RefCell::new(Vec::<wgpu::Texture>::with_capacity(20));
+
         Self {
             render_window,
             destroy_texture_queue,
+            device,
+            queue,
         }
     }
     pub fn resize_event_transformation(event: &EngineEvent) -> Option<UVec2> {
@@ -42,23 +69,17 @@ impl RenderSystem {
                 let new_size = physical_size.clone();
                 return Some(uvec2(new_size.width, new_size.height));
             }
-            EngineEvent::ScaleFactorChanged { new_inner_size, scale_factor } => {
+            EngineEvent::ScaleFactorChanged {
+                new_inner_size,
+                scale_factor,
+            } => {
                 //println!("Required Scale Factor: {:?}", scale_factor);
                 return Some(*new_inner_size);
             }
             _ => return None,
         }
     }
-    pub fn write_buffer(&self, buffer: &wgpu::Buffer, offset: wgpu::BufferAddress, data: &[u8]) {
-        self.render_window.queue.write_buffer(buffer, offset, data);
-    }
 
-    pub fn create_buffer_descriptor(
-        &self,
-        descriptor: &wgpu::util::BufferInitDescriptor,
-    ) -> wgpu::Buffer {
-        self.render_window.device.create_buffer_init(descriptor)
-    }
     pub fn create_buffer(
         &self,
         name: &str,
@@ -70,17 +91,26 @@ impl RenderSystem {
             usage: usage,
             contents: data,
         };
-        self.create_buffer_descriptor(&descriptor)
+        self.device.create_buffer_init(&descriptor)
+    }
+
+    pub fn create_bind_group(
+        &self,
+        bind_group_name: Option<&str>,
+        layout_descriptor: wgpu::BindGroupLayoutDescriptor,
+        bind_group_entries: &[wgpu::BindGroupEntry],
+    ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
+        let layout = self.device.create_bind_group_layout(&layout_descriptor);
+        let bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: bind_group_name,
+            layout: &layout,
+            entries: bind_group_entries,
+        });
+        (layout, bind_group)
     }
 
     pub fn configure_surface(&mut self) {
-        self.render_window.configure_surface();
-    }
-    pub fn create_texture(&self, descriptor: &wgpu::TextureDescriptor) -> wgpu::Texture {
-        self.render_window.device.create_texture(descriptor)
-    }
-    pub fn create_sampler(&self, descriptor: &wgpu::SamplerDescriptor) -> wgpu::Sampler {
-        self.render_window.device.create_sampler(descriptor)
+        self.render_window.configure_surface(&self.device);
     }
 
     pub fn create_shader_module_from_string(
@@ -88,8 +118,7 @@ impl RenderSystem {
         shader_name: &str,
         shader_str: Cow<str>,
     ) -> wgpu::ShaderModule {
-        self.render_window
-            .device
+        self.device
             .create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: Some(shader_name),
                 source: wgpu::ShaderSource::Wgsl(shader_str),
@@ -97,7 +126,6 @@ impl RenderSystem {
     }
 
     pub fn create_vertex_fragment_state<'a>(
-        &self,
         shader_module: &'a wgpu::ShaderModule,
         vertex_entry_point: &'a str,
         vertex_buffer_layouts: &'a [VertexBufferLayout],
@@ -121,11 +149,11 @@ impl RenderSystem {
 
     pub fn create_texture_sampler(
         &self,
-        label: &str,
+        label: Option<&str>,
         sampler_type: TextureSamplerType,
     ) -> wgpu::Sampler {
         let mut sampler_descriptor = wgpu::SamplerDescriptor {
-            label: Some(label),
+            label: label,
             ..Default::default()
         };
 
@@ -136,21 +164,20 @@ impl RenderSystem {
                     &mut sampler_descriptor,
                     wgpu::AddressMode::ClampToEdge,
                 );
-                self.render_window
-                    .device
-                    .create_sampler(&sampler_descriptor)
+                self.device.create_sampler(&sampler_descriptor)
             }
             TextureSamplerType::ClampToEdge => {
                 texture::set_all_address_mode(
                     &mut sampler_descriptor,
                     wgpu::AddressMode::ClampToEdge,
                 );
-                self.render_window
-                    .device
-                    .create_sampler(&sampler_descriptor)
-            },
-            
+                self.device.create_sampler(&sampler_descriptor)
+            }
         }
+    }
+
+    pub fn resize(&mut self, new_size: UVec2){
+        self.render_window.resize(&self.device, new_size);
     }
 
     pub fn queue_destroy_texture(&self, texture: wgpu::Texture) {

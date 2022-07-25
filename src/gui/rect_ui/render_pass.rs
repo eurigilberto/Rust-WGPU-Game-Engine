@@ -1,6 +1,6 @@
 use glam::{vec4, UVec2};
 
-use crate::render_system::{self, RenderSystem};
+use crate::graphics::{self, Graphics};
 
 use super::GUIRects;
 
@@ -80,10 +80,19 @@ pub struct GUIRenderPassData {
 }
 
 impl GUIRenderPassData {
-    pub fn new(render_system: &RenderSystem) -> Self {
-        let bind_group_layout = render_system.render_window.device.create_bind_group_layout(
-            &wgpu::BindGroupLayoutDescriptor {
-                label: Some("GUI Render pass BGL"),
+    pub fn new(graphics: &Graphics) -> Self {
+        let width = graphics.render_window.size.x;
+        let height = graphics.render_window.size.y;
+        let buffer = graphics.create_buffer(
+            "GUI render pass buffer",
+            bytemuck::bytes_of(&[vec4(width as f32, height as f32, 0.0, 0.0)]),
+            wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        );
+
+        let (bind_group_layout, bind_group) = graphics.create_bind_group(
+            Some("GUI Bind Group"),
+            wgpu::BindGroupLayoutDescriptor {
+                label: Some("GUI Bind Group Layout"),
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
                     visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
@@ -95,27 +104,11 @@ impl GUIRenderPassData {
                     count: None,
                 }],
             },
+            &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: buffer.as_entire_binding(),
+            }],
         );
-
-        let width = render_system.render_window.size.x;
-        let height = render_system.render_window.size.y;
-        let buffer = render_system.create_buffer(
-            "GUI render pass buffer",
-            bytemuck::bytes_of(&[vec4(width as f32, height as f32, 0.0, 0.0)]),
-            render_system::uniform_usage(),
-        );
-        let bind_group =
-            render_system
-                .render_window
-                .device
-                .create_bind_group(&wgpu::BindGroupDescriptor {
-                    label: Some("GUI Render pass BG"),
-                    layout: &bind_group_layout,
-                    entries: &[wgpu::BindGroupEntry {
-                        binding: 0,
-                        resource: buffer.as_entire_binding(),
-                    }],
-                });
 
         Self {
             bind_group_layout,
@@ -123,8 +116,8 @@ impl GUIRenderPassData {
             buffer,
         }
     }
-    pub fn resize(&mut self, new_size: UVec2, render_system: &RenderSystem) {
-        render_system.write_buffer(
+    pub fn resize(&mut self, new_size: UVec2, render_system: &Graphics) {
+        render_system.queue.write_buffer(
             &self.buffer,
             0,
             bytemuck::bytes_of(&[vec4(new_size.x as f32, new_size.y as f32, 0.0, 0.0)]),

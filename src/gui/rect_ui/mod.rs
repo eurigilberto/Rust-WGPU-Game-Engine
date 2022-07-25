@@ -12,8 +12,8 @@ use glam::{vec2, UVec2, Vec2};
 
 use crate::{
     math_utils::lerp_vec2,
-    render_system::{render_texture::RenderTexture, RenderSystem},
-    slotmap::slotmap::Slotmap,
+    graphics::{render_texture::RenderTexture, Graphics},
+    slotmap::Slotmap,
 };
 
 use self::{
@@ -193,7 +193,7 @@ impl Rect {
 
 impl GUIRects {
     pub fn new(
-        render_system: &RenderSystem,
+        render_system: &Graphics,
         system_bind_group_layout: &wgpu::BindGroupLayout,
         size: UVec2,
         render_texture_slotmap: &mut Slotmap<RenderTexture>,
@@ -236,7 +236,7 @@ impl GUIRects {
     pub fn resize(
         &mut self,
         new_size: UVec2,
-        render_system: &RenderSystem,
+        render_system: &Graphics,
         render_texture_slotmap: &mut Slotmap<RenderTexture>,
     ) {
         let color_rt = render_texture_slotmap

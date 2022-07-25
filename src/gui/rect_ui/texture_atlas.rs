@@ -1,4 +1,4 @@
-use crate::render_system::RenderSystem;
+use crate::graphics::Graphics;
 use std::num::{NonZeroU32, NonZeroU8};
 
 pub struct TextureAtlas {
@@ -10,10 +10,10 @@ pub struct TextureAtlas {
 }
 
 impl TextureAtlas {
-    pub fn new(render_system: &RenderSystem, width: u32, height: u32, texture_count: u32) -> Self {
+    pub fn new(render_system: &Graphics, width: u32, height: u32, texture_count: u32) -> Self {
         let format = wgpu::TextureFormat::Rgba16Float;
 
-        let texture = render_system.create_texture(&wgpu::TextureDescriptor {
+        let texture = render_system.device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Texture Atlas UI"),
             dimension: wgpu::TextureDimension::D2,
             format: format,
@@ -38,7 +38,7 @@ impl TextureAtlas {
             array_layer_count: NonZeroU32::new(texture_count),
         });
 
-        let sampler = render_system.create_sampler(&wgpu::SamplerDescriptor {
+        let sampler = render_system.device.create_sampler(&wgpu::SamplerDescriptor {
             label: Some("Texture Atlas Sampler"),
             compare: None,
             address_mode_u: wgpu::AddressMode::ClampToEdge,
@@ -53,8 +53,9 @@ impl TextureAtlas {
             mipmap_filter: wgpu::FilterMode::Linear,
         });
 
-        let bind_group_layout = render_system.render_window.device.create_bind_group_layout(
-            &wgpu::BindGroupLayoutDescriptor {
+        let (bind_group_layout, bind_group) = render_system.create_bind_group(
+            Some("Texture Atlas Bind Group Layout"),
+            wgpu::BindGroupLayoutDescriptor {
                 label: Some("Texture Atlas Bind Group Layout"),
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
@@ -75,26 +76,17 @@ impl TextureAtlas {
                     },
                 ],
             },
+            &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&texture_view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&sampler),
+                },
+            ],
         );
-
-        let bind_group =
-            render_system
-                .render_window
-                .device
-                .create_bind_group(&wgpu::BindGroupDescriptor {
-                    label: Some("Texture Atlas Bind Group"),
-                    layout: &bind_group_layout,
-                    entries: &[
-                        wgpu::BindGroupEntry {
-                            binding: 0,
-                            resource: wgpu::BindingResource::TextureView(&texture_view),
-                        },
-                        wgpu::BindGroupEntry {
-                            binding: 1,
-                            resource: wgpu::BindingResource::Sampler(&sampler),
-                        },
-                    ],
-                });
 
         Self {
             texture: texture,

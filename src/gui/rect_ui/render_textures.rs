@@ -1,7 +1,6 @@
-use crate::slotmap::slotmap::Slotmap;
-use crate::{slotmap::slotmap::SlotKey};
-use crate::render_system::render_texture::RenderTexture;
-use crate::render_system::RenderSystem;
+use crate::slotmap::{Slotmap, SlotKey};
+use crate::graphics::render_texture::RenderTexture;
+use crate::graphics::Graphics;
 use glam::{uvec2, vec2};
 
 pub fn get_color_target_states() -> [Option<wgpu::ColorTargetState>; 2] {
@@ -26,7 +25,7 @@ pub struct GUIRenderTexture {
 
 impl GUIRenderTexture {
     pub fn new(
-        render_system: &RenderSystem,
+        render_system: &Graphics,
         width: u32,
         height: u32,
         render_texture_slotmap: &mut Slotmap<RenderTexture>,

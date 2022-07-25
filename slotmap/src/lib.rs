@@ -1,10 +1,3 @@
-use std::{slice::{Iter, IterMut}};
-
-use super::{
-    free_list::FreeList,
-    slot_index_types::{Generation, SlotIndex, ValueIndex},
-};
-
 #[macro_export]
 macro_rules! create_custom_key {
     (
@@ -21,7 +14,17 @@ macro_rules! create_custom_key {
         }
     };
 }
-pub(crate) use create_custom_key;
+
+pub mod prelude;
+
+use std::{slice::{Iter, IterMut}};
+
+pub type ValueIndex = usize;
+pub type SlotIndex = usize;
+pub type Generation = u32;
+
+mod free_list;
+use free_list::*;
 
 #[derive(Clone)]
 pub struct Slot {

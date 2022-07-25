@@ -1,5 +1,5 @@
 use crate::gui::rect_ui::render_textures;
-use crate::render_system::RenderSystem;
+use crate::graphics::Graphics;
 
 pub struct RectMaterial {
     pub render_pipeline: wgpu::RenderPipeline,
@@ -7,7 +7,7 @@ pub struct RectMaterial {
 
 impl RectMaterial {
     pub fn new(
-        render_system: &RenderSystem,
+        render_system: &Graphics,
         bind_group_layouts: &[&wgpu::BindGroupLayout],
         vertex_buffer_layouts: &[wgpu::VertexBufferLayout],
     ) -> Self {
@@ -18,23 +18,22 @@ impl RectMaterial {
             "GUI Rect Render Shader",
             std::borrow::Cow::Borrowed(gui_quad_shader_str),
         );
-        let (vertex_state, fragment_state) = render_system
-            .create_vertex_fragment_state(
-                &shader_module,
-                "vs_main",
-                vertex_buffer_layouts,
-                "fs_main",
-                &color_targets,
-            );
+        let (vertex_state, fragment_state) = Graphics::create_vertex_fragment_state(
+            &shader_module,
+            "vs_main",
+            vertex_buffer_layouts,
+            "fs_main",
+            &color_targets,
+        );
 
-        let pipeline_layout = render_system.render_window.device.create_pipeline_layout(
+        let pipeline_layout = render_system.device.create_pipeline_layout(
             &wgpu::PipelineLayoutDescriptor {
                 label: Some("UI Rect Pipeline Layout Descriptor"),
                 bind_group_layouts: bind_group_layouts,
                 push_constant_ranges: &[],
             },
         );
-        let render_pipeline = render_system.render_window.device.create_render_pipeline(
+        let render_pipeline = render_system.device.create_render_pipeline(
             &wgpu::RenderPipelineDescriptor {
                 label: Some("UI Rect Render Pipeline"),
                 layout: Some(&pipeline_layout),

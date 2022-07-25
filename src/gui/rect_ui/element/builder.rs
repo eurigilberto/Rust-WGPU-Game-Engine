@@ -1,7 +1,7 @@
 use glam::{UVec2, Vec2};
 
 use crate::{
-    color::RGBA,
+    color::*,
     gui::rect_ui::{BorderRadius, ExtraBufferData, GUIRects, Rect},
 };
 

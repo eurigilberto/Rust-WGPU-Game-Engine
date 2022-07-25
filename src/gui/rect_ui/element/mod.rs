@@ -1,9 +1,6 @@
 pub mod builder;
-
 use glam::{UVec2, Vec2};
-
-use crate::color::RGBA;
-
+use crate::color::*;
 use super::{graphic::RectGraphic, BorderRadius, ExtraBufferData, GUIRects, Rect};
 
 #[derive(Copy, Clone)]

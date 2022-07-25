@@ -1,35 +1,37 @@
 use std::{collections::VecDeque, time::SystemTime};
 
+use engine::time::Microsecond;
 pub use glam;
 pub mod color;
 pub mod font;
+pub mod graphics;
 pub mod gui;
-pub mod render_system;
 pub mod math_utils;
 pub use bytemuck;
 use glam::{uvec2, UVec2};
+pub use half;
 pub use wgpu;
 pub use winit;
-pub use half;
 pub mod engine;
-pub mod slotmap;
 pub use engine::Engine;
+pub use slotmap;
 pub mod entity_component;
 pub mod runtime;
-pub use runtime::Runtime;
 pub use rand;
+pub use runtime::Runtime;
 pub use uuid;
 
 use winit::{
     event::*,
-    event_loop::{ControlFlow, EventLoop}, window::{WindowBuilder, Window},
+    event_loop::{ControlFlow, EventLoop},
+    window::{Window, WindowBuilder},
 };
 
 pub fn default_close_event_handler<F>(event: &EngineEvent, exit_event_loop: &mut F) -> bool
 where
     F: FnMut() -> (),
 {
-    if let EngineEvent::WinitEvent(e) = event{
+    if let EngineEvent::WinitEvent(e) = event {
         match e {
             WindowEvent::CloseRequested
             | WindowEvent::KeyboardInput {
@@ -46,7 +48,7 @@ where
             }
             _ => false,
         }
-    }else{
+    } else {
         false
     }
 }
@@ -54,43 +56,39 @@ where
 pub fn render<R: 'static + Runtime>(
     engine: &mut Engine,
     runtime: &mut R,
-) -> Result<u128, wgpu::SurfaceError> {
+) -> Result<Microsecond, wgpu::SurfaceError> {
     let output: wgpu::SurfaceTexture = engine
-        .render_system
+        .graphics
         .render_window
         .surface
         .get_current_texture()?;
 
-    if output.suboptimal{
+    if output.suboptimal {
         println!("Suboptimal surface!!");
     }
-    
+
     let screen_view = output
         .texture
         .create_view(&wgpu::TextureViewDescriptor::default());
-    let mut encoder = engine
-        .render_system
-        .render_window
-        .device
-        .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Render Encoder"),
-        });
+    let mut encoder =
+        engine
+            .graphics
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("Render Encoder"),
+            });
 
     runtime.render(engine, &screen_view, &mut encoder);
 
     let gpu_lock_time_start = std::time::Instant::now();
     let mut command_buffers = Vec::<wgpu::CommandBuffer>::new();
     command_buffers.push(encoder.finish());
-    engine
-        .render_system
-        .render_window
-        .queue
-        .submit(command_buffers);
+    engine.graphics.queue.submit(command_buffers);
     output.present();
-    engine.render_system.render_window.device.poll(wgpu::Maintain::Wait);
+    engine.graphics.device.poll(wgpu::Maintain::Wait);
     //pollster::block_on(on_gpu_done);
 
-    Ok(gpu_lock_time_start.elapsed().as_micros())
+    Ok(Microsecond(gpu_lock_time_start.elapsed().as_micros()))
 }
 
 #[derive(Debug)]
@@ -100,29 +98,31 @@ pub enum EngineEvent {
         scale_factor: f64,
         new_inner_size: UVec2,
     },
-    DeviceEvent{
+    DeviceEvent {
         device_id: winit::event::DeviceId,
-        event: winit::event::DeviceEvent
-    }
+        event: winit::event::DeviceEvent,
+    },
 }
 
-fn is_resize_event(event: &winit::event::WindowEvent) -> bool{
+fn is_resize_event(event: &winit::event::WindowEvent) -> bool {
     if let WindowEvent::ScaleFactorChanged { .. } | WindowEvent::Resized(..) = event {
         return true;
     }
     return false;
 }
 
-pub enum WindowOrDeviceEvent<'a>{
+pub enum WindowOrDeviceEvent<'a> {
     Window(winit::event::WindowEvent<'a>),
-    Device(DeviceId, winit::event::DeviceEvent)
+    Device(DeviceId, winit::event::DeviceEvent),
 }
 
-fn remove_any_resize_event(event_queue: &mut VecDeque<EngineEvent>){
+fn remove_any_resize_event(event_queue: &mut VecDeque<EngineEvent>) {
     let mut found_resize = false;
     let mut remove_index = 0;
-    for (index, ee) in event_queue.into_iter().enumerate(){
-        if let EngineEvent::ScaleFactorChanged { .. } | EngineEvent::WinitEvent(WindowEvent::Resized(..)) = ee {
+    for (index, ee) in event_queue.into_iter().enumerate() {
+        if let EngineEvent::ScaleFactorChanged { .. }
+        | EngineEvent::WinitEvent(WindowEvent::Resized(..)) = ee
+        {
             remove_index = index;
             found_resize = true;
             break;
@@ -133,7 +133,10 @@ fn remove_any_resize_event(event_queue: &mut VecDeque<EngineEvent>){
     }
 }
 
-fn push_window_event(event_queue: &mut VecDeque<EngineEvent>, window_event: winit::event::WindowEvent){
+fn push_window_event(
+    event_queue: &mut VecDeque<EngineEvent>,
+    window_event: winit::event::WindowEvent,
+) {
     if let WindowEvent::ScaleFactorChanged {
         scale_factor,
         new_inner_size,
@@ -160,10 +163,10 @@ fn push_event(event_queue: &mut VecDeque<EngineEvent>, event: WindowOrDeviceEven
                 remove_any_resize_event(event_queue);
             }
             push_window_event(event_queue, window_event);
-        },
+        }
         WindowOrDeviceEvent::Device(device_id, event) => {
             event_queue.push_back(EngineEvent::DeviceEvent { device_id, event });
-        },
+        }
     }
 }
 
@@ -172,7 +175,7 @@ pub fn start_engine_loop<R: 'static + Runtime>(
     mut runtime: R,
     event_loop: EventLoop<()>,
 ) {
-    engine.time.reset();
+    engine.timer.reset();
     let mut first_frame = true;
     let mut event_queue = VecDeque::<EngineEvent>::with_capacity(100);
     event_loop.run(move |event, _, control_flow| {
@@ -184,53 +187,59 @@ pub fn start_engine_loop<R: 'static + Runtime>(
                 push_event(&mut event_queue, WindowOrDeviceEvent::Window(event));
             }
             Event::DeviceEvent { device_id, event } => {
-                push_event(&mut event_queue, WindowOrDeviceEvent::Device(device_id, event));
+                push_event(
+                    &mut event_queue,
+                    WindowOrDeviceEvent::Device(device_id, event),
+                );
             }
             Event::MainEventsCleared => {
-                if engine.time.update_time() {
+                if engine.timer.update_time() {
                     let mut close_app = || {
                         *control_flow = ControlFlow::Exit;
                     };
-                    
+
                     let frame_start_time = std::time::Instant::now();
                     runtime.frame_start(&engine);
-                    engine.operation_time.frame_start_time = frame_start_time.elapsed().as_micros();
+                    engine.operation_timer.frame_start_time =
+                        Microsecond(frame_start_time.elapsed().as_micros());
 
-                    engine
-                        .time
-                        .update_buffer(&engine.render_system.render_window.queue);
-                    
+                    engine.timer.update_buffer(&engine.graphics.queue);
+
                     let event_handling_time = std::time::Instant::now();
                     runtime.handle_event_queue(&event_queue, &mut engine, &mut close_app);
-                    engine.operation_time.event_handling_time = event_handling_time.elapsed().as_micros();
+                    engine.operation_timer.event_handling_time =
+                        Microsecond(event_handling_time.elapsed().as_micros());
 
                     event_queue.clear();
-                    
+
                     let update_time = std::time::Instant::now();
                     runtime.update(&engine, &mut close_app);
-                    engine.operation_time.update_time = update_time.elapsed().as_micros();
+                    engine.operation_timer.update_time =
+                        Microsecond(update_time.elapsed().as_micros());
 
                     let render_time = std::time::Instant::now();
                     let render_result = render(&mut engine, &mut runtime);
-                    engine.operation_time.render_time = render_time.elapsed().as_micros();
-                    
+                    engine.operation_timer.render_time =
+                        Microsecond(render_time.elapsed().as_micros());
+
                     match render_result {
                         Ok(gpu_lock_time) => {
                             //println!("GPU LOCK TIME {}", gpu_lock_time * 1000.0);
-                            engine.operation_time.gpu_lock_time = gpu_lock_time;
+                            engine.operation_timer.gpu_lock_time = gpu_lock_time;
                             let operation_time = std::time::Instant::now();
-                            runtime.frame_end(&mut engine,&mut close_app);
-                            engine.operation_time.frame_end_time = operation_time.elapsed().as_micros();
+                            runtime.frame_end(&mut engine, &mut close_app);
+                            engine.operation_timer.frame_end_time =
+                                Microsecond(operation_time.elapsed().as_micros());
                         }
                         // Reconfigure the surface if lost
-                        Err(wgpu::SurfaceError::Lost) => engine.render_system.configure_surface(),
+                        Err(wgpu::SurfaceError::Lost) => engine.graphics.configure_surface(),
                         // The system is out of memory, we should probably quit
                         Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
                         //
                         Err(wgpu::SurfaceError::Outdated) => {
                             println!("Outdated Surface!");
-                            engine.render_system.configure_surface()
-                        },
+                            engine.graphics.configure_surface()
+                        }
                         // All other errors (Outdated, Timeout) should be resolved by the next frame
                         Err(e) => eprintln!("{:?}", e),
                     }

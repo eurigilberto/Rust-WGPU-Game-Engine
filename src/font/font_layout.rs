@@ -1,17 +1,12 @@
-use std::collections::HashMap;
-
-use fontdue::layout::CharacterData;
 use glam::{ivec2, vec2, IVec2, Vec2};
 
 use crate::{
-    color::RGBA,
     font::font_characters::CharacterInfo,
     gui::rect_ui::{element::TextureSlice, Rect},
 };
 
 use super::{
-    font_characters::FontCharacters,
-    font_load_gpu::{CharIndices, CharTextureSlice, FontCollection},
+    font_load_gpu::{FontCollection},
 };
 
 #[derive(Clone, Copy)]

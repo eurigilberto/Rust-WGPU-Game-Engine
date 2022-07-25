@@ -2,7 +2,7 @@ use crate::gui::rect_ui::cpu_gpu_buffer::{
     create_cpu_gpu_buffer, update_buffer, CPUGPUBuffer, GrowableBufferType,
 };
 use crate::gui::rect_ui::graphic::RectGraphic;
-use crate::render_system::RenderSystem;
+use crate::graphics::Graphics;
 
 pub struct RectCollection {
     pub rect_graphic: CPUGPUBuffer<RectGraphic>,
@@ -11,7 +11,7 @@ pub struct RectCollection {
     pub texture_position: CPUGPUBuffer<[u32; 4]>,
     pub color: CPUGPUBuffer<[f32; 4]>,
     pub uniform_bind_group_layout: wgpu::BindGroupLayout,
-    pub uniform_bind_group: wgpu::BindGroup
+    pub uniform_bind_group: wgpu::BindGroup,
 }
 
 fn bind_group_layout_entry(binding_index: u32) -> wgpu::BindGroupLayoutEntry {
@@ -28,40 +28,40 @@ fn bind_group_layout_entry(binding_index: u32) -> wgpu::BindGroupLayoutEntry {
 }
 
 impl RectCollection {
-    pub fn new(initial_capacity: usize, render_system: &RenderSystem) -> Self {
+    pub fn new(initial_capacity: usize, graphics: &Graphics) -> Self {
         let rect_graphic = create_cpu_gpu_buffer::<RectGraphic>(
             GrowableBufferType::VertexBuffer,
             initial_capacity,
-            render_system,
+            graphics,
             "Rect Collection",
         );
         let rect_mask = create_cpu_gpu_buffer::<[f32; 4]>(
             GrowableBufferType::StorageBuffer,
             initial_capacity,
-            render_system,
+            graphics,
             "Rect Mask Collection",
         );
         let border_radius = create_cpu_gpu_buffer::<[f32; 4]>(
             GrowableBufferType::StorageBuffer,
             initial_capacity,
-            render_system,
+            graphics,
             "Border Radius Collection",
         );
         let texture_position = create_cpu_gpu_buffer::<[u32; 4]>(
             GrowableBufferType::StorageBuffer,
             initial_capacity,
-            render_system,
+            graphics,
             "Texture Position Collection",
         );
         let color = create_cpu_gpu_buffer::<[f32; 4]>(
             GrowableBufferType::StorageBuffer,
             initial_capacity,
-            render_system,
+            graphics,
             "Color Collection",
         );
 
-        let bind_group_layout = render_system.render_window.device.create_bind_group_layout(
-            &wgpu::BindGroupLayoutDescriptor {
+        let bind_group_layout =
+            graphics.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("Bind Group Layout"),
                 entries: &[
                     bind_group_layout_entry(0),
@@ -69,35 +69,30 @@ impl RectCollection {
                     bind_group_layout_entry(2),
                     bind_group_layout_entry(3),
                 ],
-            },
-        );
+            });
 
-        let bind_group =
-            render_system
-                .render_window
-                .device
-                .create_bind_group(&wgpu::BindGroupDescriptor {
-                    label: Some("Bind Group"),
-                    layout: &bind_group_layout,
-                    entries: &[
-                        wgpu::BindGroupEntry {
-                            binding: 0,
-                            resource: rect_mask.gpu_buffer.as_entire_binding(),
-                        },
-                        wgpu::BindGroupEntry {
-                            binding: 1,
-                            resource: border_radius.gpu_buffer.as_entire_binding(),
-                        },
-                        wgpu::BindGroupEntry {
-                            binding: 2,
-                            resource: texture_position.gpu_buffer.as_entire_binding(),
-                        },
-                        wgpu::BindGroupEntry {
-                            binding: 3,
-                            resource: color.gpu_buffer.as_entire_binding(),
-                        },
-                    ],
-                });
+        let bind_group = graphics.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Bind Group"),
+            layout: &bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: rect_mask.gpu_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: border_radius.gpu_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: texture_position.gpu_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
+                    resource: color.gpu_buffer.as_entire_binding(),
+                },
+            ],
+        });
 
         Self {
             rect_graphic,
@@ -106,11 +101,11 @@ impl RectCollection {
             texture_position,
             color,
             uniform_bind_group_layout: bind_group_layout,
-            uniform_bind_group: bind_group
+            uniform_bind_group: bind_group,
         }
     }
 
-    pub fn update_gpu_buffers(&mut self, render_system: &RenderSystem) {
+    pub fn update_gpu_buffers(&mut self, render_system: &Graphics) {
         update_buffer(&mut self.rect_graphic, render_system);
         update_buffer(&mut self.rect_mask, render_system);
         update_buffer(&mut self.border_radius, render_system);
@@ -118,7 +113,7 @@ impl RectCollection {
         update_buffer(&mut self.color, render_system);
     }
 
-    pub fn clear_buffers(&mut self){
+    pub fn clear_buffers(&mut self) {
         self.rect_graphic.clear_buffer();
         self.rect_mask.clear_buffer();
         self.border_radius.clear_buffer();

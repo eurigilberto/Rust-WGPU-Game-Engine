@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use super::slot_index_types::SlotIndex;
+use super::SlotIndex;
 ///A ***Bucket*** is a collection of free slots
 pub struct FreeBucket {
     start_index: usize,
